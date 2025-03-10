@@ -12,27 +12,41 @@
     <meta name="twitter:card" content="summary_large_image">
     <title>Quote Bitcoin - Real-Time Price and Bitcoin Quotes</title>
     <link rel="icon" href="images/favicon.ico" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Open+Sans&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- Header with navigation and search bar -->
     <header class="header">
-        <div class="logo">
-            <h1>Quote Bitcoin</h1>
-        </div>
-        <nav class="nav">
-            <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#">Quotes</a></li>
-                <li><a href="#">History</a></li>
-                <li><a href="#">Learn</a></li>
-                <li><a href="#">Community</a></li>
-            </ul>
-        </nav>
-        <div class="search">
-            <input type="text" placeholder="Search...">
-            <button type="submit"><img src="images/search-icon.png" alt="Search"></button>
+        <div class="container">
+            <div class="logo">
+                <a href="/" aria-label="Quote Bitcoin Home">
+                    <h1>Quote Bitcoin</h1>
+                </a>
+            </div>
+            <button class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+                <span class="hamburger"></span>
+            </button>
+            <nav class="nav" aria-label="Main navigation">
+                <ul>
+                    <li><a href="/" aria-current="page">Home</a></li>
+                    <li><a href="/quotes">Quotes</a></li>
+                    <li><a href="/history">History</a></li>
+                    <li><a href="/learn">Learn</a></li>
+                    <li><a href="/community">Community</a></li>
+                </ul>
+            </nav>
+            <div class="search" role="search">
+                <label for="search-input" class="visually-hidden">Search website</label>
+                <input type="search" id="search-input" placeholder="Search quotes..." aria-label="Search quotes">
+                <button type="submit" aria-label="Submit search">
+                    <svg aria-hidden="true" class="search-icon" viewBox="0 0 24 24">
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -40,52 +54,141 @@
     <main>
         <!-- Bitcoin Price Section -->
         <section id="bitcoin-price" class="price-section">
-            <h1>Bitcoin Price: <span id="price">$62,345.12</span></h1>
-            <p id="price-change" class="price-change">+1.8%</p>
+            <div class="container">
+                <div class="price-card">
+                    <h2>Current Bitcoin Price</h2>
+                    <div class="price-display">
+                        <span id="price" class="price">Loading...</span>
+                        <span id="price-change" class="price-change">--</span>
+                    </div>
+                    <div class="price-details">
+                        <div class="detail-item">
+                            <span class="label">24h High:</span>
+                            <span id="price-high">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">24h Low:</span>
+                            <span id="price-low">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Volume:</span>
+                            <span id="volume">--</span>
+                        </div>
+                    </div>
+                    <div class="last-updated">
+                        Last updated: <time id="update-time">Loading...</time>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Featured Quote Section -->
         <section id="featured-quote" class="quote-section">
-            <h2>Today’s Quote</h2>
-            <p class="quote">"Bitcoin is a remarkable cryptographic achievement..."</p>
-            <p class="author">– Satoshi Nakamoto, 2009</p>
+            <div class="container">
+                <h2>Featured Quote</h2>
+                <blockquote class="quote-card">
+                    <p id="quote-text" class="quote">Loading today's inspiration...</p>
+                    <footer>
+                        <cite id="quote-author" class="author">--</cite>
+                        <time id="quote-date" class="date">--</time>
+                    </footer>
+                    <button class="btn refresh-quote" aria-label="Load new quote">
+                        <svg class="refresh-icon" aria-hidden="true" viewBox="0 0 24 24">
+                            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                        </svg>
+                    </button>
+                </blockquote>
+            </div>
         </section>
 
         <!-- Resources Section -->
         <section id="resources" class="resources-section">
-            <div class="resource-card">
-                <img src="images/chart-icon.png" alt="Chart Icon">
-                <h3>Historical Data</h3>
-                <p>View Bitcoin's price history.</p>
-                <a href="#" class="btn">Explore</a>
-            </div>
-            <div class="resource-card">
-                <img src="images/quote-icon.png" alt="Quote Icon">
-                <h3>Quote Gallery</h3>
-                <p>Browse our collection of Bitcoin quotes.</p>
-                <a href="#" class="btn">Explore</a>
-            </div>
-            <div class="resource-card">
-                <img src="images/learn-icon.png" alt="Learn Icon">
-                <h3>Educational Articles</h3>
-                <p>Learn more about Bitcoin and blockchain.</p>
-                <a href="#" class="btn">Explore</a>
-            </div>
-            <div class="resource-card">
-                <img src="images/community-icon.png" alt="Community Icon">
-                <h3>Community Forum</h3>
-                <p>Join the discussion with fellow enthusiasts.</p>
-                <a href="#" class="btn">Explore</a>
+            <div class="container">
+                <h2>Bitcoin Resources</h2>
+                <div class="resources-grid">
+                    <article class="resource-card" data-aos="fade-up">
+                        <div class="card-icon">
+                            <svg aria-hidden="true" class="icon-chart" viewBox="0 0 24 24">
+                                <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/>
+                            </svg>
+                        </div>
+                        <h3>Historical Data</h3>
+                        <p>Analyze Bitcoin's complete price history with interactive charts and detailed metrics.</p>
+                        <a href="/history" class="btn btn-primary">View Charts</a>
+                    </article>
+
+                    <article class="resource-card" data-aos="fade-up" data-aos-delay="100">
+                        <div class="card-icon">
+                            <svg aria-hidden="true" class="icon-quote" viewBox="0 0 24 24">
+                                <path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/>
+                            </svg>
+                        </div>
+                        <h3>Quote Gallery</h3>
+                        <p>Discover inspiring quotes from industry leaders, developers, and visionaries.</p>
+                        <a href="/quotes" class="btn btn-primary">Browse Quotes</a>
+                    </article>
+
+                    <article class="resource-card" data-aos="fade-up" data-aos-delay="200">
+                        <div class="card-icon">
+                            <svg aria-hidden="true" class="icon-learn" viewBox="0 0 24 24">
+                                <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9z"/>
+                            </svg>
+                        </div>
+                        <h3>Learn Bitcoin</h3>
+                        <p>Comprehensive guides and articles about Bitcoin technology and economics.</p>
+                        <a href="/learn" class="btn btn-primary">Start Learning</a>
+                    </article>
+
+                    <article class="resource-card" data-aos="fade-up" data-aos-delay="300">
+                        <div class="card-icon">
+                            <svg aria-hidden="true" class="icon-community" viewBox="0 0 24 24">
+                                <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                            </svg>
+                        </div>
+                        <h3>Community</h3>
+                        <p>Join discussions, share insights, and connect with fellow Bitcoin enthusiasts.</p>
+                        <a href="/community" class="btn btn-primary">Join Now</a>
+                    </article>
+                </div>
             </div>
         </section>
     </main>
 
     <!-- Footer -->
     <footer class="footer">
-        <p>© 2023 Quote Bitcoin. All rights reserved.</p>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h4>About Us</h4>
+                    <p>Quote Bitcoin provides real-time cryptocurrency data and educational resources.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/about">About</a></li>
+                        <li><a href="/contact">Contact</a></li>
+                        <li><a href="/privacy">Privacy Policy</a></li>
+                        <li><a href="/terms">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Connect</h4>
+                    <div class="social-links">
+                        <a href="https://twitter.com/quotebitcoin" aria-label="Follow us on Twitter" rel="noopener">Twitter</a>
+                        <a href="https://github.com/quotebitcoin" aria-label="Follow us on GitHub" rel="noopener">GitHub</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span id="current-year">2024</span> Quote Bitcoin. All rights reserved.</p>
+            </div>
+        </div>
     </footer>
 
-    <!-- Link to JavaScript file for dynamic features -->
-    <script src="script.js"></script>
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+    <script src="js/price-updates.js" type="module"></script>
+    <script src="js/quotes.js" type="module"></script>
+    <script src="js/main.js" type="module"></script>
 </body>
 </html>
