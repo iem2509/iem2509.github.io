@@ -1,5 +1,5 @@
 // Constants for API endpoints
-const COINGECKO_API = 'https://pro-api.coingecko.com/api/v3';
+const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 const API_KEY = 'CG-GjbMF5QQTbK2kvV2XkL1ZR5t';
 const PRICE_UPDATE_INTERVAL = 30000; // 30 seconds
 
