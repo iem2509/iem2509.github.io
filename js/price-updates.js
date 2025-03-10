@@ -1,5 +1,6 @@
-// Constants for API endpoints - using CoinGecko's public API
+// Constants for API endpoints - using CoinGecko's simple price API
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+const SIMPLE_PRICE_API = `${COINGECKO_API}/simple/price?ids=bitcoin&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true`;
 const PRICE_UPDATE_INTERVAL = 300000; // 5 minutes (to stay within rate limits)
 const CACHE_DURATION = 290000; // 4m 50s cache duration
 
@@ -165,7 +166,7 @@ const displayBitcoinData = (data) => {
     lastUpdated = Date.now();
 };
 
-// Fetch Bitcoin data from CoinGecko public API
+// Fetch Bitcoin data from CoinGecko's simple price API
 const fetchBitcoinData = async () => {
     try {
         // Check cache first
@@ -176,13 +177,17 @@ const fetchBitcoinData = async () => {
         }
         
         setLoadingState(true);
-        addDebugOutput('Fetching data from CoinGecko Public API...');
+        addDebugOutput('Fetching data from CoinGecko Simple Price API...');
         
-        // Fetch Bitcoin market data - using the recommended endpoint from docs
-        const marketDataUrl = `${COINGECKO_API}/coins/bitcoin?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`;
-        
-        addDebugOutput(`Requesting: ${marketDataUrl}`);
-        const response = await fetch(marketDataUrl);
+        // Make the API call with CORS mode explicit
+        addDebugOutput(`Requesting: ${SIMPLE_PRICE_API}`);
+        const response = await fetch(SIMPLE_PRICE_API, {
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
         
         if (!response.ok) {
             const errorText = await response.text();
@@ -193,16 +198,23 @@ const fetchBitcoinData = async () => {
         const data = await response.json();
         addDebugOutput('Data received successfully');
         
-        // Extract the relevant data from the response
-        const marketData = data.market_data;
+        // Check if we have Bitcoin data
+        if (!data.bitcoin) {
+            addDebugOutput('No Bitcoin data in response');
+            throw new Error('No Bitcoin data in response');
+        }
         
+        const btcData = data.bitcoin;
+        
+        // Create data object from the simple API
         const bitcoinData = {
-            price: marketData.current_price.usd,
-            priceChange: marketData.price_change_percentage_24h,
-            high: marketData.high_24h.usd,
-            low: marketData.low_24h.usd,
-            volume: marketData.total_volume.usd,
-            source: 'coingecko'
+            price: btcData.usd,
+            priceChange: btcData.usd_24h_change || 0,
+            high: btcData.usd * 1.01, // Estimate high (1% above current)
+            low: btcData.usd * 0.99,  // Estimate low (1% below current)
+            volume: btcData.usd_24h_vol || 0,
+            lastUpdated: btcData.last_updated_at,
+            source: 'coingecko-simple'
         };
         
         addDebugOutput(`Price: ${bitcoinData.price}, Change: ${bitcoinData.priceChange.toFixed(2)}%`);
@@ -214,38 +226,55 @@ const fetchBitcoinData = async () => {
         addDebugOutput(`Error fetching data: ${error.message}`);
         console.error('Bitcoin data fetch error:', error);
         
-        // Try simple price endpoint as fallback
+        // Try direct JSONP approach with script tag as a last resort
         try {
-            addDebugOutput('Trying simple price endpoint as fallback...');
-            const simplePriceUrl = `${COINGECKO_API}/simple/price?ids=bitcoin&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true`;
+            addDebugOutput('Trying direct script tag for JSONP as last resort...');
             
-            addDebugOutput(`Requesting: ${simplePriceUrl}`);
-            const simpleResponse = await fetch(simplePriceUrl);
+            const jsonpCallback = 'handleCoinGeckoResponse';
             
-            if (!simpleResponse.ok) {
-                throw new Error(`Simple API error: ${simpleResponse.status}`);
-            }
-            
-            const simpleData = await simpleResponse.json();
-            const btcData = simpleData.bitcoin;
-            
-            // Create a data object from the simple API (less comprehensive but should work)
-            const fallbackData = {
-                price: btcData.usd,
-                priceChange: btcData.usd_24h_change,
-                high: btcData.usd * 1.01, // Estimate
-                low: btcData.usd * 0.99,  // Estimate
-                volume: btcData.usd_24h_vol,
-                source: 'coingecko-simple'
+            // Define global callback
+            window[jsonpCallback] = function(data) {
+                if (data && data.bitcoin) {
+                    const btcData = data.bitcoin;
+                    
+                    const fallbackData = {
+                        price: btcData.usd,
+                        priceChange: btcData.usd_24h_change || 0,
+                        high: btcData.usd * 1.01,
+                        low: btcData.usd * 0.99,
+                        volume: btcData.usd_24h_vol || 0,
+                        source: 'coingecko-jsonp'
+                    };
+                    
+                    addDebugOutput(`JSONP data retrieved. Price: ${fallbackData.price}`);
+                    displayBitcoinData(fallbackData);
+                    setLoadingState(false);
+                    
+                    // Clean up
+                    document.body.removeChild(document.getElementById('coingecko-jsonp'));
+                    delete window[jsonpCallback];
+                }
             };
             
-            addDebugOutput(`Fallback data retrieved. Price: ${fallbackData.price}`);
-            displayBitcoinData(fallbackData);
-            setLoadingState(false);
-            return;
+            // Create script tag
+            const script = document.createElement('script');
+            script.id = 'coingecko-jsonp';
+            script.src = `${SIMPLE_PRICE_API}&callback=${jsonpCallback}`;
+            document.body.appendChild(script);
             
-        } catch (fallbackError) {
-            addDebugOutput(`Fallback also failed: ${fallbackError.message}`);
+            // Set timeout to clean up if no response
+            setTimeout(() => {
+                if (document.getElementById('coingecko-jsonp')) {
+                    document.body.removeChild(document.getElementById('coingecko-jsonp'));
+                    delete window[jsonpCallback];
+                    addDebugOutput('JSONP request timed out');
+                }
+            }, 5000);
+            
+            return; // Wait for callback
+            
+        } catch (jsonpError) {
+            addDebugOutput(`JSONP approach also failed: ${jsonpError.message}`);
         }
         
         setLoadingState(false);
@@ -273,7 +302,7 @@ const fetchBitcoinData = async () => {
 
 // Initialize updates
 const initPriceUpdates = () => {
-    addDebugOutput('Initializing Bitcoin price updates with CoinGecko API');
+    addDebugOutput('Initializing Bitcoin price updates with CoinGecko Simple API');
     
     // Add styles for loading state and price updates
     const style = document.createElement('style');
