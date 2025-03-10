@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Price Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #log {
+            background: #f5f5f5;
+            padding: 10px;
+            border: 1px solid #ccc;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            font-family: monospace;
+        }
+        button {
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f7931a;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bitcoin Price API Test</h1>
+    <p>This page tests different Bitcoin price API endpoints. Check which ones work for you.</p>
+    
+    <div id="prices">
+        <div>
+            <h2>Coinbase BTC-USD</h2>
+            <span class="price" id="coinbase-price">Testing...</span>
+            <button onclick="testCoinbase()">Test Coinbase API</button>
+        </div>
+        <div>
+            <h2>CoinDesk BPI</h2>
+            <span class="price" id="coindesk-price">Testing...</span>
+            <button onclick="testCoinDesk()">Test CoinDesk API</button>
+        </div>
+        <div>
+            <h2>CoinGecko Simple</h2>
+            <span class="price" id="coingecko-price">Testing...</span>
+            <button onclick="testCoinGecko()">Test CoinGecko API</button>
+        </div>
+    </div>
+    
+    <h2>Debug Log</h2>
+    <div id="log"></div>
+    
+    <button onclick="clearLog()">Clear Log</button>
+    
+    <script>
+        // Log function
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toISOString().substring(11, 19);
+            const entry = document.createElement('div');
+            entry.textContent = `[${timestamp}] ${message}`;
+            logElement.appendChild(entry);
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+        
+        // Clear log
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        // Format currency
+        function formatPrice(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2
+            }).format(amount);
+        }
+        
+        // Test Coinbase API
+        async function testCoinbase() {
+            const priceElement = document.getElementById('coinbase-price');
+            priceElement.textContent = 'Testing...';
+            
+            try {
+                log('Testing Coinbase API...');
+                const url = 'https://api.coinbase.com/v2/prices/BTC-USD/spot';
+                log(`Fetching from: ${url}`);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                log(`Response status: ${response.status}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`Error: ${errorText}`);
+                    priceElement.textContent = `Error: ${response.status}`;
+                    return;
+                }
+                
+                const data = await response.json();
+                log(`Response data: ${JSON.stringify(data)}`);
+                
+                if (data && data.data && data.data.amount) {
+                    const price = parseFloat(data.data.amount);
+                    priceElement.textContent = formatPrice(price);
+                    log(`Success! Price: ${price}`);
+                } else {
+                    priceElement.textContent = 'Invalid response';
+                    log('Invalid response format');
+                }
+            } catch (error) {
+                priceElement.textContent = 'API Error';
+                log(`Error: ${error.message}`);
+            }
+        }
+        
+        // Test CoinDesk API
+        async function testCoinDesk() {
+            const priceElement = document.getElementById('coindesk-price');
+            priceElement.textContent = 'Testing...';
+            
+            try {
+                log('Testing CoinDesk API...');
+                const url = 'https://api.coindesk.com/v1/bpi/currentprice.json';
+                log(`Fetching from: ${url}`);
+                
+                const response = await fetch(url);
+                log(`Response status: ${response.status}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`Error: ${errorText}`);
+                    priceElement.textContent = `Error: ${response.status}`;
+                    return;
+                }
+                
+                const data = await response.json();
+                log(`Response data received (not shown due to size)`);
+                
+                if (data && data.bpi && data.bpi.USD && data.bpi.USD.rate_float) {
+                    const price = data.bpi.USD.rate_float;
+                    priceElement.textContent = formatPrice(price);
+                    log(`Success! Price: ${price}`);
+                } else {
+                    priceElement.textContent = 'Invalid response';
+                    log('Invalid response format');
+                }
+            } catch (error) {
+                priceElement.textContent = 'API Error';
+                log(`Error: ${error.message}`);
+            }
+        }
+        
+        // Test CoinGecko API
+        async function testCoinGecko() {
+            const priceElement = document.getElementById('coingecko-price');
+            priceElement.textContent = 'Testing...';
+            
+            try {
+                log('Testing CoinGecko API...');
+                const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd';
+                log(`Fetching from: ${url}`);
+                
+                const response = await fetch(url);
+                log(`Response status: ${response.status}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`Error: ${errorText}`);
+                    priceElement.textContent = `Error: ${response.status}`;
+                    return;
+                }
+                
+                const data = await response.json();
+                log(`Response data: ${JSON.stringify(data)}`);
+                
+                if (data && data.bitcoin && data.bitcoin.usd) {
+                    const price = data.bitcoin.usd;
+                    priceElement.textContent = formatPrice(price);
+                    log(`Success! Price: ${price}`);
+                } else {
+                    priceElement.textContent = 'Invalid response';
+                    log('Invalid response format');
+                }
+            } catch (error) {
+                priceElement.textContent = 'API Error';
+                log(`Error: ${error.message}`);
+            }
+        }
+        
+        // Test all on page load
+        window.onload = function() {
+            log('Page loaded. Testing all APIs...');
+            testCoinbase();
+            testCoinDesk();
+            testCoinGecko();
+        };
+    </script>
+</body>
+</html> 
