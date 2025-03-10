@@ -1,0 +1,191 @@
+/* CSS Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Global Styles */
+body {
+    font-family: 'Open Sans', sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+h1, h2, h3 {
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logo h1 {
+    font-size: 1.5rem;
+    color: #F7931A;
+}
+
+.nav ul {
+    list-style: none;
+    display: flex;
+}
+
+.nav li {
+    margin: 0 1rem;
+}
+
+.nav a {
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+}
+
+.search {
+    display: flex;
+    align-items: center;
+}
+
+.search input {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.search button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: 0.5rem;
+}
+
+/* Bitcoin Price Section */
+.price-section {
+    text-align: center;
+    padding: 2rem;
+    background-color: #fff;
+}
+
+.price-section h1 {
+    font-size: 3rem;
+    color: #F7931A;
+}
+
+.price-section #price {
+    font-weight: bold;
+}
+
+.price-section .price-change {
+    font-size: 1.5rem;
+    color: #4CAF50; /* Green for positive change */
+}
+
+/* Featured Quote Section */
+.quote-section {
+    text-align: center;
+    padding: 2rem;
+    background-color: #f1f1f1;
+}
+
+.quote-section h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.quote-section .quote {
+    font-style: italic;
+    font-size: 1.2rem;
+    color: #555;
+}
+
+.quote-section .author {
+    font-size: 1rem;
+    color: #777;
+    margin-top: 0.5rem;
+}
+
+/* Resources Section */
+.resources-section {
+    display: flex;
+    justify-content: space-around;
+    padding: 2rem;
+    background-color: #fff;
+}
+
+.resource-card {
+    text-align: center;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    width: 20%;
+}
+
+.resource-card img {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 1rem;
+}
+
+.resource-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.resource-card p {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.resource-card .btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: #F7931A;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 1rem;
+    background-color: #333;
+    color: #fff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .nav ul {
+        flex-direction: column;
+        margin-top: 1rem;
+    }
+
+    .nav li {
+        margin: 0.5rem 0;
+    }
+
+    .search {
+        margin-top: 1rem;
+    }
+
+    .resources-section {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .resource-card {
+        width: 80%;
+        margin-bottom: 1rem;
+    }
+}
