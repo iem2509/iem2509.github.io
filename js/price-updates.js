@@ -1,7 +1,8 @@
 // Constants for API endpoints
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 const API_KEY = 'CG-GjbMF5QQTbK2kvV2XkL1ZR5t';
-const PRICE_UPDATE_INTERVAL = 30000; // 30 seconds
+const PRICE_UPDATE_INTERVAL = 60000; // 60 seconds instead of 30
+const RATE_LIMIT_DELAY = 60000; // 60 seconds delay when rate limited
 
 // DOM elements
 const priceElement = document.getElementById('price');
@@ -64,6 +65,16 @@ const setLoadingState = (isLoading) => {
     });
 };
 
+// Handle rate limit
+const handleRateLimit = async () => {
+    console.log('Rate limit hit, waiting before retry...');
+    setLoadingState(true);
+    priceElement.textContent = 'Rate Limited';
+    await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY));
+    setLoadingState(false);
+    return fetchBitcoinData();
+};
+
 // Fetch Bitcoin data
 const fetchBitcoinData = async () => {
     try {
@@ -78,6 +89,10 @@ const fetchBitcoinData = async () => {
                 }
             }
         );
+        
+        if (response.status === 429) {
+            return handleRateLimit();
+        }
         
         if (!response.ok) {
             const errorData = await response.json();
@@ -153,7 +168,7 @@ const initPriceUpdates = () => {
     // Initial fetch
     fetchBitcoinData();
     
-    // Set up interval
+    // Set up interval with a longer delay
     setInterval(fetchBitcoinData, PRICE_UPDATE_INTERVAL);
 };
 
