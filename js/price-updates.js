@@ -75,6 +75,16 @@ const setLoadingState = (element, isLoading) => {
     }
 };
 
+// Set error state with message
+const setErrorState = (element, message) => {
+    element.classList.remove('loading');
+    element.classList.add('error');
+    element.textContent = message || 'Error';
+    
+    // Also show in debug panel
+    addDebugOutput(`Error displayed: "${message}"`);
+};
+
 // Add debug output for troubleshooting
 const addDebugOutput = (message) => {
     if (!debugElement) {
@@ -140,7 +150,9 @@ const getCachedData = (key, maxAge) => {
 
 // Display the Bitcoin price from Coinbase
 const displayPrice = (price) => {
+    addDebugOutput(`Displaying price: ${price}`);
     priceElement.textContent = formatCurrency(price);
+    priceElement.classList.remove('error');
     
     // Add animation
     priceElement.classList.add('price-update');
@@ -159,7 +171,7 @@ const displayPrice = (price) => {
 const displaySupplementaryData = (data) => {
     // Update price change
     priceChangeElement.textContent = formatPercentage(data.priceChange);
-    priceChangeElement.classList.remove('positive', 'negative');
+    priceChangeElement.classList.remove('positive', 'negative', 'error');
     priceChangeElement.classList.add(data.priceChange >= 0 ? 'positive' : 'negative');
     
     // Update high/low and volume
@@ -173,9 +185,44 @@ const displaySupplementaryData = (data) => {
     cacheData('bitcoinSupplementary', data);
 };
 
+// Check if DOM elements exist
+const checkDOMElements = () => {
+    const elements = {
+        price: priceElement,
+        priceChange: priceChangeElement,
+        priceHigh: priceHighElement,
+        priceLow: priceLowElement,
+        volume: volumeElement,
+        updateTime: updateTimeElement
+    };
+    
+    let missingElements = [];
+    
+    for (const [name, element] of Object.entries(elements)) {
+        if (!element) {
+            missingElements.push(name);
+            addDebugOutput(`Missing DOM element: ${name}`);
+        }
+    }
+    
+    if (missingElements.length > 0) {
+        addDebugOutput(`CRITICAL ERROR: Missing DOM elements: ${missingElements.join(', ')}`);
+        return false;
+    }
+    
+    addDebugOutput('All DOM elements found');
+    return true;
+};
+
 // Fetch Bitcoin price from Coinbase API
 const fetchBitcoinPrice = async () => {
     try {
+        // Check if DOM elements exist
+        if (!checkDOMElements()) {
+            setErrorState(priceElement, 'DOM Error');
+            return;
+        }
+        
         // Check cache first for very recent updates
         const cachedPrice = getCachedData('bitcoinPrice', 30000); // 30 seconds max age
         if (cachedPrice && Date.now() - lastPriceUpdate < 30000) {
@@ -190,23 +237,59 @@ const fetchBitcoinPrice = async () => {
         const priceUrl = `${COINBASE_API}/prices/BTC-USD/spot`;
         addDebugOutput(`Requesting: ${priceUrl}`);
         
-        const response = await fetch(priceUrl);
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            addDebugOutput(`Coinbase API Error (${response.status}): ${errorText}`);
-            throw new Error(`Coinbase API error: ${response.status}`);
+        // Use verbose fetch with proper error handling
+        let response;
+        try {
+            response = await fetch(priceUrl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+        } catch (fetchError) {
+            addDebugOutput(`Network error fetching from Coinbase: ${fetchError.message}`);
+            throw new Error(`Network error: ${fetchError.message}`);
         }
         
-        const data = await response.json();
+        if (!response) {
+            addDebugOutput('No response received from Coinbase');
+            throw new Error('No response received');
+        }
+        
+        if (!response.ok) {
+            let errorText = '';
+            try {
+                const errorData = await response.text();
+                errorText = errorData;
+            } catch (e) {
+                errorText = `Status ${response.status}`;
+            }
+            
+            addDebugOutput(`Coinbase API Error (${response.status}): ${errorText}`);
+            throw new Error(`API error: ${response.status} - ${errorText}`);
+        }
+        
+        let data;
+        try {
+            data = await response.json();
+        } catch (jsonError) {
+            addDebugOutput(`JSON parse error: ${jsonError.message}`);
+            throw new Error(`JSON parse error: ${jsonError.message}`);
+        }
+        
         addDebugOutput('Price data received successfully from Coinbase');
         
-        if (!data.data || !data.data.amount) {
-            addDebugOutput('Invalid response format from Coinbase');
-            throw new Error('Invalid response format from Coinbase');
+        if (!data || !data.data || !data.data.amount) {
+            addDebugOutput(`Invalid response format from Coinbase: ${JSON.stringify(data)}`);
+            throw new Error('Invalid response format');
         }
         
         const price = parseFloat(data.data.amount);
+        if (isNaN(price)) {
+            addDebugOutput(`Invalid price value: ${data.data.amount}`);
+            throw new Error(`Invalid price value: ${data.data.amount}`);
+        }
+        
         addDebugOutput(`Current BTC price: ${price}`);
         
         displayPrice(price);
@@ -216,15 +299,17 @@ const fetchBitcoinPrice = async () => {
         addDebugOutput(`Error fetching price: ${error.message}`);
         console.error('Bitcoin price fetch error:', error);
         
-        setLoadingState(priceElement, false);
+        // Set visible error state
+        setErrorState(priceElement, `Price Error: ${error.message}`);
         
         // If we have cached price, use it
         const cachedPrice = getCachedData('bitcoinPrice', Infinity); // No max age for fallback
         if (cachedPrice) {
             addDebugOutput('Using cached price as fallback');
-            displayPrice(cachedPrice);
-        } else {
-            priceElement.textContent = 'Price Unavailable';
+            setTimeout(() => {
+                displayPrice(cachedPrice);
+                addDebugOutput('Displayed cached price after error');
+            }, 3000); // Show error for 3 seconds, then show cached price
         }
         
         // Retry after a shorter delay
@@ -301,6 +386,7 @@ const fetchSupplementaryData = async () => {
             addDebugOutput('Using cached supplementary data as fallback');
             displaySupplementaryData(cachedData);
         } else {
+            // Set dash for unavailable data
             priceChangeElement.textContent = '--';
             priceHighElement.textContent = '--';
             priceLowElement.textContent = '--';
@@ -322,6 +408,10 @@ const initPriceUpdates = () => {
         .loading {
             opacity: 0.5;
         }
+        .error {
+            color: #f44336;
+            opacity: 0.8;
+        }
         .price-update {
             animation: flash 1s ease-out;
         }
@@ -337,6 +427,18 @@ const initPriceUpdates = () => {
         }
     `;
     document.head.appendChild(style);
+    
+    // Check if DOM elements exist
+    if (!checkDOMElements()) {
+        addDebugOutput('ERROR: Some DOM elements are missing. Price updates cannot run.');
+        
+        // Try to display error in price element if it exists
+        if (priceElement) {
+            setErrorState(priceElement, 'DOM Error - Check Debug');
+        }
+        
+        return;
+    }
     
     // Initial fetches
     fetchBitcoinPrice();
