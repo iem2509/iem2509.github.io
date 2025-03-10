@@ -1,8 +1,9 @@
 // Constants for API endpoints
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
-const API_KEY = 'CG-GjbMF5QQTbK2kvV2XkL1ZR5t';
-const PRICE_UPDATE_INTERVAL = 300000; // 5 minutes instead of 1 minute
-const RATE_LIMIT_DELAY = 120000; // 2 minutes delay when rate limited
+const COINDESK_API = 'https://api.coindesk.com/v1/bpi/currentprice.json';
+const COINPAPRIKA_API = 'https://api.coinpaprika.com/v1';
+const PRICE_UPDATE_INTERVAL = 300000; // 5 minutes
+const CACHE_DURATION = 290000; // 4m 50s cache duration (slightly less than update interval)
 
 // DOM elements
 const priceElement = document.getElementById('price');
@@ -11,6 +12,10 @@ const priceHighElement = document.getElementById('price-high');
 const priceLowElement = document.getElementById('price-low');
 const volumeElement = document.getElementById('volume');
 const updateTimeElement = document.getElementById('update-time');
+
+// Last stored data (for caching)
+let cachedData = null;
+let lastUpdated = 0;
 
 // Format currency
 const formatCurrency = (amount, currency = 'USD') => {
@@ -65,80 +70,191 @@ const setLoadingState = (isLoading) => {
     });
 };
 
-// Handle rate limit
-const handleRateLimit = async () => {
-    console.log('Rate limit hit, waiting before retry...');
-    setLoadingState(true);
-    priceElement.textContent = 'Rate Limited';
-    await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY));
-    setLoadingState(false);
-    return fetchBitcoinData();
+// Cache data in localStorage
+const cacheData = (data) => {
+    try {
+        localStorage.setItem('bitcoinData', JSON.stringify({
+            data: data,
+            timestamp: Date.now()
+        }));
+    } catch (e) {
+        console.warn('Failed to cache data in localStorage:', e);
+    }
 };
 
-// Fetch Bitcoin data
+// Get cached data from localStorage
+const getCachedData = () => {
+    try {
+        const cached = localStorage.getItem('bitcoinData');
+        if (cached) {
+            const parsedCache = JSON.parse(cached);
+            const cacheAge = Date.now() - parsedCache.timestamp;
+            
+            if (cacheAge < CACHE_DURATION) {
+                return parsedCache.data;
+            }
+        }
+    } catch (e) {
+        console.warn('Failed to retrieve cached data:', e);
+    }
+    return null;
+};
+
+// Display Bitcoin data
+const displayBitcoinData = (data) => {
+    // Update price display
+    priceElement.textContent = formatCurrency(data.price);
+    
+    // Update price change
+    const priceChange = data.priceChange;
+    priceChangeElement.textContent = formatPercentage(priceChange);
+    priceChangeElement.classList.remove('positive', 'negative');
+    priceChangeElement.classList.add(priceChange >= 0 ? 'positive' : 'negative');
+    
+    // Update high/low and volume
+    priceHighElement.textContent = formatCurrency(data.high);
+    priceLowElement.textContent = formatCurrency(data.low);
+    volumeElement.textContent = formatVolume(data.volume);
+    
+    // Update time
+    updateTimeDisplay();
+    
+    // Add animation
+    priceElement.classList.add('price-update');
+    setTimeout(() => priceElement.classList.remove('price-update'), 1000);
+    
+    // Cache the data
+    cacheData(data);
+    cachedData = data;
+    lastUpdated = Date.now();
+};
+
+// Fetch from multiple sources with fallbacks
 const fetchBitcoinData = async () => {
     try {
+        // Check cache first
+        const cached = getCachedData();
+        if (cached && Date.now() - lastUpdated < CACHE_DURATION) {
+            displayBitcoinData(cached);
+            return;
+        }
+        
         setLoadingState(true);
         
-        const response = await fetch(
-            `${COINGECKO_API}/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_last_updated_at=true`,
-            {
-                headers: {
-                    'x-cg-pro-api-key': API_KEY,
-                    'Accept': 'application/json'
-                }
+        // Try Coinpaprika first (most comprehensive data)
+        try {
+            // Get current price and ticker
+            const [priceResponse, tickerResponse] = await Promise.all([
+                fetch(`${COINPAPRIKA_API}/coins/btc-bitcoin`),
+                fetch(`${COINPAPRIKA_API}/tickers/btc-bitcoin`)
+            ]);
+            
+            if (priceResponse.ok && tickerResponse.ok) {
+                const [priceData, tickerData] = await Promise.all([
+                    priceResponse.json(),
+                    tickerResponse.json()
+                ]);
+                
+                const data = {
+                    price: tickerData.quotes.USD.price,
+                    priceChange: tickerData.quotes.USD.percent_change_24h,
+                    high: tickerData.quotes.USD.ath_price,
+                    low: tickerData.quotes.USD.price - (tickerData.quotes.USD.price * Math.abs(tickerData.quotes.USD.percent_change_24h) / 200), // Estimate based on percent change
+                    volume: tickerData.quotes.USD.volume_24h,
+                    source: 'coinpaprika'
+                };
+                
+                displayBitcoinData(data);
+                setLoadingState(false);
+                return;
             }
-        );
-        
-        if (response.status === 429) {
-            return handleRateLimit();
+        } catch (error) {
+            console.warn('Failed to fetch from Coinpaprika, trying fallback:', error);
         }
         
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('API Error:', errorData);
-            throw new Error(errorData.error || 'Failed to fetch Bitcoin data');
+        // Fallback to CoinDesk (very reliable, basic data)
+        try {
+            const response = await fetch(COINDESK_API);
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // CoinDesk doesn't provide all data, so we'll use estimates
+                const currentPrice = data.bpi.USD.rate_float;
+                const estimatedChange = 0; // We don't have this from CoinDesk
+                
+                const bitcoinData = {
+                    price: currentPrice,
+                    priceChange: estimatedChange,
+                    high: currentPrice * 1.01, // Approximate
+                    low: currentPrice * 0.99, // Approximate
+                    volume: 0, // Not available
+                    source: 'coindesk'
+                };
+                
+                displayBitcoinData(bitcoinData);
+                setLoadingState(false);
+                
+                // Try to get more complete data from CoinGecko in the background
+                fetchFromCoinGecko().catch(() => {});
+                return;
+            }
+        } catch (error) {
+            console.warn('Failed to fetch from CoinDesk, trying final fallback:', error);
         }
         
-        const data = await response.json();
-        const btcData = data.bitcoin;
+        // Final fallback to CoinGecko
+        await fetchFromCoinGecko();
         
-        // Update price display
-        priceElement.textContent = formatCurrency(btcData.usd);
-        
-        // Update price change
-        const priceChange = btcData.usd_24h_change;
-        priceChangeElement.textContent = formatPercentage(priceChange);
-        priceChangeElement.classList.remove('positive', 'negative');
-        priceChangeElement.classList.add(priceChange >= 0 ? 'positive' : 'negative');
-        
-        // Update high/low and volume
-        priceHighElement.textContent = formatCurrency(btcData.usd_24h_high);
-        priceLowElement.textContent = formatCurrency(btcData.usd_24h_low);
-        volumeElement.textContent = formatVolume(btcData.usd_24h_vol);
-        
-        // Update time
-        updateTimeDisplay();
-        
-        // Add animation
-        priceElement.classList.add('price-update');
-        setTimeout(() => priceElement.classList.remove('price-update'), 1000);
-        
-        setLoadingState(false);
     } catch (error) {
-        console.error('Error fetching Bitcoin data:', error);
+        console.error('All API attempts failed:', error);
         setLoadingState(false);
         
-        // Show error state
+        // If we have cached data, use it even if expired
+        if (cachedData) {
+            console.log('Using expired cached data as fallback');
+            displayBitcoinData(cachedData);
+            return;
+        }
+        
+        // Show error state if all else fails
         priceElement.textContent = 'Price Unavailable';
         priceChangeElement.textContent = '--';
         priceHighElement.textContent = '--';
         priceLowElement.textContent = '--';
         volumeElement.textContent = '--';
+        updateTimeDisplay();
         
-        // Retry after a delay if there's an error
-        setTimeout(fetchBitcoinData, 30000); // 30 seconds retry delay
+        // Retry after a delay
+        setTimeout(fetchBitcoinData, 60000); // 1 minute retry
     }
+};
+
+// Fetch from CoinGecko
+const fetchFromCoinGecko = async () => {
+    const response = await fetch(
+        `${COINGECKO_API}/coins/bitcoin?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`
+    );
+    
+    if (!response.ok) {
+        throw new Error('CoinGecko API failed');
+    }
+    
+    const data = await response.json();
+    const marketData = data.market_data;
+    
+    const bitcoinData = {
+        price: marketData.current_price.usd,
+        priceChange: marketData.price_change_percentage_24h,
+        high: marketData.high_24h.usd,
+        low: marketData.low_24h.usd,
+        volume: marketData.total_volume.usd,
+        source: 'coingecko'
+    };
+    
+    displayBitcoinData(bitcoinData);
+    setLoadingState(false);
+    return bitcoinData;
 };
 
 // Initialize updates
@@ -168,7 +284,7 @@ const initPriceUpdates = () => {
     // Initial fetch
     fetchBitcoinData();
     
-    // Set up interval with a longer delay
+    // Set up interval
     setInterval(fetchBitcoinData, PRICE_UPDATE_INTERVAL);
 };
 
