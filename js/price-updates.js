@@ -1,7 +1,11 @@
-// Constants for API endpoints - using CoinGecko's simple price API
+// Constants for API endpoints
+const COINBASE_API = 'https://api.coinbase.com/v2';
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
-const SIMPLE_PRICE_API = `${COINGECKO_API}/simple/price?ids=bitcoin&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true`;
-const PRICE_UPDATE_INTERVAL = 300000; // 5 minutes (to stay within rate limits)
+const COINGECKO_SIMPLE_API = `${COINGECKO_API}/simple/price?ids=bitcoin&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true`;
+
+// Update intervals (different for price vs supplementary data)
+const PRICE_UPDATE_INTERVAL = 60000; // 1 minute for price updates
+const SUPPLEMENTARY_DATA_INTERVAL = 300000; // 5 minutes for other data
 const CACHE_DURATION = 290000; // 4m 50s cache duration
 
 // DOM elements
@@ -15,9 +19,11 @@ const updateTimeElement = document.getElementById('update-time');
 // Debug element (will create if needed)
 let debugElement = null;
 
-// Last stored data (for caching)
-let cachedData = null;
-let lastUpdated = 0;
+// Cached data
+let cachedPrice = null;
+let cachedSupplementaryData = null;
+let lastPriceUpdate = 0;
+let lastSupplementaryUpdate = 0;
 
 // Format currency
 const formatCurrency = (amount, currency = 'USD') => {
@@ -55,21 +61,18 @@ const updateTimeDisplay = () => {
     updateTimeElement.textContent = now.toLocaleTimeString();
 };
 
-// Add loading state
-const setLoadingState = (isLoading) => {
-    const elements = [priceElement, priceChangeElement, priceHighElement, priceLowElement, volumeElement];
-    elements.forEach(element => {
-        if (isLoading) {
-            element.classList.add('loading');
-            element.dataset.previousText = element.textContent;
-            element.textContent = 'Loading...';
-        } else {
-            element.classList.remove('loading');
-            if (element.dataset.previousText) {
-                element.textContent = element.dataset.previousText;
-            }
+// Set loading state
+const setLoadingState = (element, isLoading) => {
+    if (isLoading) {
+        element.classList.add('loading');
+        element.dataset.previousText = element.textContent;
+        element.textContent = 'Loading...';
+    } else {
+        element.classList.remove('loading');
+        if (element.dataset.previousText) {
+            element.textContent = element.dataset.previousText;
         }
-    });
+    }
 };
 
 // Add debug output for troubleshooting
@@ -100,88 +103,153 @@ const addDebugOutput = (message) => {
 };
 
 // Cache data in localStorage
-const cacheData = (data) => {
+const cacheData = (key, data) => {
     try {
-        localStorage.setItem('bitcoinData', JSON.stringify({
+        localStorage.setItem(key, JSON.stringify({
             data: data,
             timestamp: Date.now()
         }));
-        addDebugOutput(`Data cached successfully`);
+        addDebugOutput(`Data cached successfully for ${key}`);
     } catch (e) {
-        addDebugOutput(`Failed to cache data: ${e.message}`);
+        addDebugOutput(`Failed to cache data for ${key}: ${e.message}`);
     }
 };
 
 // Get cached data from localStorage
-const getCachedData = () => {
+const getCachedData = (key, maxAge) => {
     try {
-        const cached = localStorage.getItem('bitcoinData');
+        const cached = localStorage.getItem(key);
         if (cached) {
             const parsedCache = JSON.parse(cached);
             const cacheAge = Date.now() - parsedCache.timestamp;
             
-            if (cacheAge < CACHE_DURATION) {
-                addDebugOutput(`Using cached data (${Math.round(cacheAge / 1000)}s old)`);
+            if (cacheAge < maxAge) {
+                addDebugOutput(`Using cached ${key} (${Math.round(cacheAge / 1000)}s old)`);
                 return parsedCache.data;
             } else {
-                addDebugOutput(`Cache expired (${Math.round(cacheAge / 1000)}s old)`);
+                addDebugOutput(`Cache expired for ${key} (${Math.round(cacheAge / 1000)}s old)`);
             }
         } else {
-            addDebugOutput(`No cache found`);
+            addDebugOutput(`No cache found for ${key}`);
         }
     } catch (e) {
-        addDebugOutput(`Error retrieving cache: ${e.message}`);
+        addDebugOutput(`Error retrieving cache for ${key}: ${e.message}`);
     }
     return null;
 };
 
-// Display Bitcoin data
-const displayBitcoinData = (data) => {
-    addDebugOutput(`Displaying data from ${data.source}`);
+// Display the Bitcoin price from Coinbase
+const displayPrice = (price) => {
+    priceElement.textContent = formatCurrency(price);
     
-    // Update price display
-    priceElement.textContent = formatCurrency(data.price);
+    // Add animation
+    priceElement.classList.add('price-update');
+    setTimeout(() => priceElement.classList.remove('price-update'), 1000);
     
+    // Update time display
+    updateTimeDisplay();
+    
+    // Store the price
+    cachedPrice = price;
+    lastPriceUpdate = Date.now();
+    cacheData('bitcoinPrice', price);
+};
+
+// Display supplementary data from CoinGecko
+const displaySupplementaryData = (data) => {
     // Update price change
-    const priceChange = data.priceChange;
-    priceChangeElement.textContent = formatPercentage(priceChange);
+    priceChangeElement.textContent = formatPercentage(data.priceChange);
     priceChangeElement.classList.remove('positive', 'negative');
-    priceChangeElement.classList.add(priceChange >= 0 ? 'positive' : 'negative');
+    priceChangeElement.classList.add(data.priceChange >= 0 ? 'positive' : 'negative');
     
     // Update high/low and volume
     priceHighElement.textContent = formatCurrency(data.high);
     priceLowElement.textContent = formatCurrency(data.low);
     volumeElement.textContent = formatVolume(data.volume);
     
-    // Update time
-    updateTimeDisplay();
-    
-    // Add animation
-    priceElement.classList.add('price-update');
-    setTimeout(() => priceElement.classList.remove('price-update'), 1000);
-    
-    // Cache the data
-    cacheData(data);
-    cachedData = data;
-    lastUpdated = Date.now();
+    // Store the data
+    cachedSupplementaryData = data;
+    lastSupplementaryUpdate = Date.now();
+    cacheData('bitcoinSupplementary', data);
 };
 
-// Fetch Bitcoin data from CoinGecko's simple price API
-const fetchBitcoinData = async () => {
+// Fetch Bitcoin price from Coinbase API
+const fetchBitcoinPrice = async () => {
     try {
-        // Check cache first
-        const cached = getCachedData();
-        if (cached && Date.now() - lastUpdated < CACHE_DURATION) {
-            displayBitcoinData(cached);
+        // Check cache first for very recent updates
+        const cachedPrice = getCachedData('bitcoinPrice', 30000); // 30 seconds max age
+        if (cachedPrice && Date.now() - lastPriceUpdate < 30000) {
+            displayPrice(cachedPrice);
             return;
         }
         
-        setLoadingState(true);
-        addDebugOutput('Fetching data from CoinGecko Simple Price API...');
+        setLoadingState(priceElement, true);
+        addDebugOutput('Fetching price from Coinbase API...');
         
-        // Make the API call with CORS mode explicit
-        addDebugOutput(`Requesting: ${SIMPLE_PRICE_API}`);
-        const response = await fetch(SIMPLE_PRICE_API, {
+        // Make the API call to Coinbase
+        const priceUrl = `${COINBASE_API}/prices/BTC-USD/spot`;
+        addDebugOutput(`Requesting: ${priceUrl}`);
+        
+        const response = await fetch(priceUrl);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            addDebugOutput(`Coinbase API Error (${response.status}): ${errorText}`);
+            throw new Error(`Coinbase API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        addDebugOutput('Price data received successfully from Coinbase');
+        
+        if (!data.data || !data.data.amount) {
+            addDebugOutput('Invalid response format from Coinbase');
+            throw new Error('Invalid response format from Coinbase');
+        }
+        
+        const price = parseFloat(data.data.amount);
+        addDebugOutput(`Current BTC price: ${price}`);
+        
+        displayPrice(price);
+        setLoadingState(priceElement, false);
+        
+    } catch (error) {
+        addDebugOutput(`Error fetching price: ${error.message}`);
+        console.error('Bitcoin price fetch error:', error);
+        
+        setLoadingState(priceElement, false);
+        
+        // If we have cached price, use it
+        const cachedPrice = getCachedData('bitcoinPrice', Infinity); // No max age for fallback
+        if (cachedPrice) {
+            addDebugOutput('Using cached price as fallback');
+            displayPrice(cachedPrice);
+        } else {
+            priceElement.textContent = 'Price Unavailable';
+        }
+        
+        // Retry after a shorter delay
+        setTimeout(fetchBitcoinPrice, 30000); // 30 seconds retry
+    }
+};
+
+// Fetch supplementary Bitcoin data from CoinGecko
+const fetchSupplementaryData = async () => {
+    try {
+        // Check cache first
+        const cachedData = getCachedData('bitcoinSupplementary', CACHE_DURATION);
+        if (cachedData && Date.now() - lastSupplementaryUpdate < CACHE_DURATION) {
+            displaySupplementaryData(cachedData);
+            return;
+        }
+        
+        const elements = [priceChangeElement, priceHighElement, priceLowElement, volumeElement];
+        elements.forEach(el => setLoadingState(el, true));
+        
+        addDebugOutput('Fetching supplementary data from CoinGecko...');
+        
+        // Make the API call to CoinGecko
+        addDebugOutput(`Requesting: ${COINGECKO_SIMPLE_API}`);
+        const response = await fetch(COINGECKO_SIMPLE_API, {
             method: 'GET',
             mode: 'cors',
             headers: {
@@ -191,118 +259,62 @@ const fetchBitcoinData = async () => {
         
         if (!response.ok) {
             const errorText = await response.text();
-            addDebugOutput(`API Error (${response.status}): ${errorText}`);
+            addDebugOutput(`CoinGecko API Error (${response.status}): ${errorText}`);
             throw new Error(`CoinGecko API error: ${response.status}`);
         }
         
         const data = await response.json();
-        addDebugOutput('Data received successfully');
+        addDebugOutput('Supplementary data received successfully from CoinGecko');
         
-        // Check if we have Bitcoin data
         if (!data.bitcoin) {
-            addDebugOutput('No Bitcoin data in response');
-            throw new Error('No Bitcoin data in response');
+            addDebugOutput('No Bitcoin data in CoinGecko response');
+            throw new Error('No Bitcoin data in CoinGecko response');
         }
         
         const btcData = data.bitcoin;
         
-        // Create data object from the simple API
-        const bitcoinData = {
-            price: btcData.usd,
+        // Create supplementary data object
+        const supplementaryData = {
             priceChange: btcData.usd_24h_change || 0,
             high: btcData.usd * 1.01, // Estimate high (1% above current)
             low: btcData.usd * 0.99,  // Estimate low (1% below current)
             volume: btcData.usd_24h_vol || 0,
             lastUpdated: btcData.last_updated_at,
-            source: 'coingecko-simple'
+            source: 'coingecko'
         };
         
-        addDebugOutput(`Price: ${bitcoinData.price}, Change: ${bitcoinData.priceChange.toFixed(2)}%`);
+        addDebugOutput(`24h Change: ${supplementaryData.priceChange.toFixed(2)}%, Volume: ${formatVolume(supplementaryData.volume)}`);
         
-        displayBitcoinData(bitcoinData);
-        setLoadingState(false);
+        displaySupplementaryData(supplementaryData);
+        elements.forEach(el => setLoadingState(el, false));
         
     } catch (error) {
-        addDebugOutput(`Error fetching data: ${error.message}`);
-        console.error('Bitcoin data fetch error:', error);
+        addDebugOutput(`Error fetching supplementary data: ${error.message}`);
+        console.error('Supplementary data fetch error:', error);
         
-        // Try direct JSONP approach with script tag as a last resort
-        try {
-            addDebugOutput('Trying direct script tag for JSONP as last resort...');
-            
-            const jsonpCallback = 'handleCoinGeckoResponse';
-            
-            // Define global callback
-            window[jsonpCallback] = function(data) {
-                if (data && data.bitcoin) {
-                    const btcData = data.bitcoin;
-                    
-                    const fallbackData = {
-                        price: btcData.usd,
-                        priceChange: btcData.usd_24h_change || 0,
-                        high: btcData.usd * 1.01,
-                        low: btcData.usd * 0.99,
-                        volume: btcData.usd_24h_vol || 0,
-                        source: 'coingecko-jsonp'
-                    };
-                    
-                    addDebugOutput(`JSONP data retrieved. Price: ${fallbackData.price}`);
-                    displayBitcoinData(fallbackData);
-                    setLoadingState(false);
-                    
-                    // Clean up
-                    document.body.removeChild(document.getElementById('coingecko-jsonp'));
-                    delete window[jsonpCallback];
-                }
-            };
-            
-            // Create script tag
-            const script = document.createElement('script');
-            script.id = 'coingecko-jsonp';
-            script.src = `${SIMPLE_PRICE_API}&callback=${jsonpCallback}`;
-            document.body.appendChild(script);
-            
-            // Set timeout to clean up if no response
-            setTimeout(() => {
-                if (document.getElementById('coingecko-jsonp')) {
-                    document.body.removeChild(document.getElementById('coingecko-jsonp'));
-                    delete window[jsonpCallback];
-                    addDebugOutput('JSONP request timed out');
-                }
-            }, 5000);
-            
-            return; // Wait for callback
-            
-        } catch (jsonpError) {
-            addDebugOutput(`JSONP approach also failed: ${jsonpError.message}`);
-        }
+        const elements = [priceChangeElement, priceHighElement, priceLowElement, volumeElement];
+        elements.forEach(el => setLoadingState(el, false));
         
-        setLoadingState(false);
-        
-        // If we have cached data, use it even if expired
+        // If we have cached supplementary data, use it
+        const cachedData = getCachedData('bitcoinSupplementary', Infinity); // No max age for fallback
         if (cachedData) {
-            addDebugOutput('Using expired cached data as fallback');
-            displayBitcoinData(cachedData);
-            return;
+            addDebugOutput('Using cached supplementary data as fallback');
+            displaySupplementaryData(cachedData);
+        } else {
+            priceChangeElement.textContent = '--';
+            priceHighElement.textContent = '--';
+            priceLowElement.textContent = '--';
+            volumeElement.textContent = '--';
         }
-        
-        // Show error state if all else fails
-        priceElement.textContent = 'Price Unavailable';
-        priceChangeElement.textContent = '--';
-        priceHighElement.textContent = '--';
-        priceLowElement.textContent = '--';
-        volumeElement.textContent = '--';
-        updateTimeDisplay();
         
         // Retry after a delay
-        addDebugOutput('Will retry in 60 seconds...');
-        setTimeout(fetchBitcoinData, 60000); // 1 minute retry
+        setTimeout(fetchSupplementaryData, 60000); // 1 minute retry
     }
 };
 
 // Initialize updates
 const initPriceUpdates = () => {
-    addDebugOutput('Initializing Bitcoin price updates with CoinGecko Simple API');
+    addDebugOutput('Initializing Bitcoin price updates with Coinbase and CoinGecko');
     
     // Add styles for loading state and price updates
     const style = document.createElement('style');
@@ -326,12 +338,15 @@ const initPriceUpdates = () => {
     `;
     document.head.appendChild(style);
     
-    // Initial fetch
-    fetchBitcoinData();
+    // Initial fetches
+    fetchBitcoinPrice();
+    fetchSupplementaryData();
     
-    // Set up interval
-    setInterval(fetchBitcoinData, PRICE_UPDATE_INTERVAL);
-    addDebugOutput(`Update interval set to ${PRICE_UPDATE_INTERVAL/1000} seconds`);
+    // Set up intervals with different frequencies
+    setInterval(fetchBitcoinPrice, PRICE_UPDATE_INTERVAL);
+    setInterval(fetchSupplementaryData, SUPPLEMENTARY_DATA_INTERVAL);
+    
+    addDebugOutput(`Price update interval: ${PRICE_UPDATE_INTERVAL/1000}s, Supplementary data interval: ${SUPPLEMENTARY_DATA_INTERVAL/1000}s`);
 };
 
 // Start updates when DOM is loaded
