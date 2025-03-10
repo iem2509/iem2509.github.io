@@ -1,5 +1,5 @@
 // Constants for API endpoints
-const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+const COINGECKO_API = 'https://pro-api.coingecko.com/api/v3';
 const API_KEY = 'CG-GjbMF5QQTbK2kvV2XkL1ZR5t';
 const PRICE_UPDATE_INTERVAL = 30000; // 30 seconds
 
@@ -70,10 +70,11 @@ const fetchBitcoinData = async () => {
         setLoadingState(true);
         
         const response = await fetch(
-            `${COINGECKO_API}/coins/bitcoin?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`,
+            `${COINGECKO_API}/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_last_updated_at=true`,
             {
                 headers: {
-                    'x-cg-pro-api-key': API_KEY
+                    'x-cg-pro-api-key': API_KEY,
+                    'Accept': 'application/json'
                 }
             }
         );
@@ -84,22 +85,22 @@ const fetchBitcoinData = async () => {
             throw new Error(errorData.error || 'Failed to fetch Bitcoin data');
         }
         
-        const btcData = await response.json();
-        const marketData = btcData.market_data;
+        const data = await response.json();
+        const btcData = data.bitcoin;
         
         // Update price display
-        priceElement.textContent = formatCurrency(marketData.current_price.usd);
+        priceElement.textContent = formatCurrency(btcData.usd);
         
         // Update price change
-        const priceChange = marketData.price_change_percentage_24h;
+        const priceChange = btcData.usd_24h_change;
         priceChangeElement.textContent = formatPercentage(priceChange);
         priceChangeElement.classList.remove('positive', 'negative');
         priceChangeElement.classList.add(priceChange >= 0 ? 'positive' : 'negative');
         
         // Update high/low and volume
-        priceHighElement.textContent = formatCurrency(marketData.high_24h.usd);
-        priceLowElement.textContent = formatCurrency(marketData.low_24h.usd);
-        volumeElement.textContent = formatVolume(marketData.total_volume.usd);
+        priceHighElement.textContent = formatCurrency(btcData.usd_24h_high);
+        priceLowElement.textContent = formatCurrency(btcData.usd_24h_low);
+        volumeElement.textContent = formatVolume(btcData.usd_24h_vol);
         
         // Update time
         updateTimeDisplay();
