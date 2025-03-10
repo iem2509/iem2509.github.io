@@ -1,5 +1,6 @@
 // Constants for API endpoints
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+const API_KEY = 'CG-GjbMF5QQTbK2kvV2XkL1ZR5t';
 const PRICE_UPDATE_INTERVAL = 30000; // 30 seconds
 
 // DOM elements
@@ -69,12 +70,24 @@ const fetchBitcoinData = async () => {
         setLoadingState(true);
         
         const response = await fetch(
-            `${COINGECKO_API}/coins/markets?vs_currency=usd&ids=bitcoin&order=market_cap_desc&per_page=1&page=1&sparkline=false&price_change_percentage=24h`
+            `${COINGECKO_API}/coins/markets?vs_currency=usd&ids=bitcoin&order=market_cap_desc&per_page=1&page=1&sparkline=false&price_change_percentage=24h`,
+            {
+                headers: {
+                    'x-cg-pro-api-key': API_KEY
+                }
+            }
         );
         
-        if (!response.ok) throw new Error('Failed to fetch market data');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to fetch market data');
+        }
         
         const [btcData] = await response.json();
+        
+        if (!btcData) {
+            throw new Error('No data received from API');
+        }
         
         // Update price display
         priceElement.textContent = formatCurrency(btcData.current_price);
@@ -108,6 +121,9 @@ const fetchBitcoinData = async () => {
         priceHighElement.textContent = '--';
         priceLowElement.textContent = '--';
         volumeElement.textContent = '--';
+        
+        // Retry after a delay if there's an error
+        setTimeout(fetchBitcoinData, 5000);
     }
 };
 
