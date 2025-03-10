@@ -1,7 +1,6 @@
-// Constants for API endpoints
-const COINDESK_API = 'https://api.coindesk.com/v1/bpi/currentprice.json';
-const COINDESK_HISTORICAL_API = 'https://api.coindesk.com/v1/bpi/historical/close.json';
-const PRICE_UPDATE_INTERVAL = 300000; // 5 minutes
+// Constants for API endpoints - using CoinGecko's public API
+const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+const PRICE_UPDATE_INTERVAL = 300000; // 5 minutes (to stay within rate limits)
 const CACHE_DURATION = 290000; // 4m 50s cache duration
 
 // DOM elements
@@ -37,9 +36,16 @@ const formatPercentage = (value) => {
     }).format(value / 100);
 };
 
-// Format volume (estimated)
+// Format volume
 const formatVolume = (volume) => {
-    return `~ ${Math.round(volume / 1e6)} million USD`;
+    if (volume >= 1e9) {
+        return (volume / 1e9).toFixed(2) + 'B USD';
+    } else if (volume >= 1e6) {
+        return (volume / 1e6).toFixed(2) + 'M USD';
+    } else if (volume >= 1e3) {
+        return (volume / 1e3).toFixed(2) + 'K USD';
+    }
+    return volume.toFixed(2) + ' USD';
 };
 
 // Update time display
@@ -87,6 +93,9 @@ const addDebugOutput = (message) => {
     while (debugElement.children.length > 20) {
         debugElement.removeChild(debugElement.firstChild);
     }
+
+    // Also log to console for additional debugging
+    console.log(`[Bitcoin Price] ${message}`);
 };
 
 // Cache data in localStorage
@@ -138,7 +147,7 @@ const displayBitcoinData = (data) => {
     priceChangeElement.classList.remove('positive', 'negative');
     priceChangeElement.classList.add(priceChange >= 0 ? 'positive' : 'negative');
     
-    // Update high/low and volume (estimated)
+    // Update high/low and volume
     priceHighElement.textContent = formatCurrency(data.high);
     priceLowElement.textContent = formatCurrency(data.low);
     volumeElement.textContent = formatVolume(data.volume);
@@ -156,7 +165,7 @@ const displayBitcoinData = (data) => {
     lastUpdated = Date.now();
 };
 
-// Fetch from CoinDesk (most reliable for GitHub Pages)
+// Fetch Bitcoin data from CoinGecko public API
 const fetchBitcoinData = async () => {
     try {
         // Check cache first
@@ -167,64 +176,36 @@ const fetchBitcoinData = async () => {
         }
         
         setLoadingState(true);
-        addDebugOutput('Fetching current price from CoinDesk...');
+        addDebugOutput('Fetching data from CoinGecko Public API...');
         
-        // Get current price from CoinDesk
-        const currentPriceResponse = await fetch(COINDESK_API);
+        // Fetch Bitcoin market data - using the recommended endpoint from docs
+        const marketDataUrl = `${COINGECKO_API}/coins/bitcoin?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`;
         
-        if (!currentPriceResponse.ok) {
-            throw new Error(`CoinDesk API error: ${currentPriceResponse.status}`);
+        addDebugOutput(`Requesting: ${marketDataUrl}`);
+        const response = await fetch(marketDataUrl);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            addDebugOutput(`API Error (${response.status}): ${errorText}`);
+            throw new Error(`CoinGecko API error: ${response.status}`);
         }
         
-        // Get 30-day historical data for high/low estimation
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 30);
+        const data = await response.json();
+        addDebugOutput('Data received successfully');
         
-        const startDateStr = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
-        const endDateStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+        // Extract the relevant data from the response
+        const marketData = data.market_data;
         
-        addDebugOutput(`Fetching historical data from ${startDateStr} to ${endDateStr}...`);
-        
-        const historicalResponse = await fetch(
-            `${COINDESK_HISTORICAL_API}?start=${startDateStr}&end=${endDateStr}`
-        );
-        
-        if (!historicalResponse.ok) {
-            throw new Error(`Historical API error: ${historicalResponse.status}`);
-        }
-        
-        // Process the data
-        const [currentPriceData, historicalData] = await Promise.all([
-            currentPriceResponse.json(),
-            historicalResponse.json()
-        ]);
-        
-        const currentPrice = currentPriceData.bpi.USD.rate_float;
-        const historicalPrices = Object.values(historicalData.bpi);
-        
-        // Calculate stats
-        const high = Math.max(...historicalPrices);
-        const low = Math.min(...historicalPrices);
-        
-        // Calculate change based on yesterday's price
-        const yesterday = historicalPrices[historicalPrices.length - 2] || historicalPrices[historicalPrices.length - 1];
-        const change = ((currentPrice - yesterday) / yesterday) * 100;
-        
-        // Estimate volume (rough estimate based on market patterns)
-        const estimatedVolume = currentPrice * 1000000; // Roughly $1 million of BTC per USD price point
-        
-        addDebugOutput(`Price data processed successfully. Current: ${currentPrice}, Change: ${change.toFixed(2)}%`);
-        
-        // Create data object
         const bitcoinData = {
-            price: currentPrice,
-            priceChange: change,
-            high: high,
-            low: low,
-            volume: estimatedVolume,
-            source: 'coindesk'
+            price: marketData.current_price.usd,
+            priceChange: marketData.price_change_percentage_24h,
+            high: marketData.high_24h.usd,
+            low: marketData.low_24h.usd,
+            volume: marketData.total_volume.usd,
+            source: 'coingecko'
         };
+        
+        addDebugOutput(`Price: ${bitcoinData.price}, Change: ${bitcoinData.priceChange.toFixed(2)}%`);
         
         displayBitcoinData(bitcoinData);
         setLoadingState(false);
@@ -232,6 +213,41 @@ const fetchBitcoinData = async () => {
     } catch (error) {
         addDebugOutput(`Error fetching data: ${error.message}`);
         console.error('Bitcoin data fetch error:', error);
+        
+        // Try simple price endpoint as fallback
+        try {
+            addDebugOutput('Trying simple price endpoint as fallback...');
+            const simplePriceUrl = `${COINGECKO_API}/simple/price?ids=bitcoin&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true`;
+            
+            addDebugOutput(`Requesting: ${simplePriceUrl}`);
+            const simpleResponse = await fetch(simplePriceUrl);
+            
+            if (!simpleResponse.ok) {
+                throw new Error(`Simple API error: ${simpleResponse.status}`);
+            }
+            
+            const simpleData = await simpleResponse.json();
+            const btcData = simpleData.bitcoin;
+            
+            // Create a data object from the simple API (less comprehensive but should work)
+            const fallbackData = {
+                price: btcData.usd,
+                priceChange: btcData.usd_24h_change,
+                high: btcData.usd * 1.01, // Estimate
+                low: btcData.usd * 0.99,  // Estimate
+                volume: btcData.usd_24h_vol,
+                source: 'coingecko-simple'
+            };
+            
+            addDebugOutput(`Fallback data retrieved. Price: ${fallbackData.price}`);
+            displayBitcoinData(fallbackData);
+            setLoadingState(false);
+            return;
+            
+        } catch (fallbackError) {
+            addDebugOutput(`Fallback also failed: ${fallbackError.message}`);
+        }
+        
         setLoadingState(false);
         
         // If we have cached data, use it even if expired
@@ -250,13 +266,14 @@ const fetchBitcoinData = async () => {
         updateTimeDisplay();
         
         // Retry after a delay
+        addDebugOutput('Will retry in 60 seconds...');
         setTimeout(fetchBitcoinData, 60000); // 1 minute retry
     }
 };
 
 // Initialize updates
 const initPriceUpdates = () => {
-    addDebugOutput('Initializing price updates...');
+    addDebugOutput('Initializing Bitcoin price updates with CoinGecko API');
     
     // Add styles for loading state and price updates
     const style = document.createElement('style');
