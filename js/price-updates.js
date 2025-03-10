@@ -1,8 +1,8 @@
 // Constants for API endpoints
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 const API_KEY = 'CG-GjbMF5QQTbK2kvV2XkL1ZR5t';
-const PRICE_UPDATE_INTERVAL = 60000; // 60 seconds instead of 30
-const RATE_LIMIT_DELAY = 60000; // 60 seconds delay when rate limited
+const PRICE_UPDATE_INTERVAL = 300000; // 5 minutes instead of 1 minute
+const RATE_LIMIT_DELAY = 120000; // 2 minutes delay when rate limited
 
 // DOM elements
 const priceElement = document.getElementById('price');
@@ -137,7 +137,7 @@ const fetchBitcoinData = async () => {
         volumeElement.textContent = '--';
         
         // Retry after a delay if there's an error
-        setTimeout(fetchBitcoinData, 5000);
+        setTimeout(fetchBitcoinData, 30000); // 30 seconds retry delay
     }
 };
 
