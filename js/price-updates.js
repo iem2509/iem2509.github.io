@@ -9,12 +9,12 @@ const SUPPLEMENTARY_DATA_INTERVAL = 300000; // 5 minutes for other data
 const CACHE_DURATION = 290000; // 4m 50s cache duration
 
 // DOM elements - with extra checks
-const priceElement = document.getElementById('price');
-const priceChangeElement = document.getElementById('price-change');
-const priceHighElement = document.getElementById('price-high');
-const priceLowElement = document.getElementById('price-low');
-const volumeElement = document.getElementById('volume');
-const updateTimeElement = document.getElementById('update-time');
+let priceElement;
+let priceChangeElement;
+let priceHighElement;
+let priceLowElement;
+let volumeElement;
+let updateTimeElement;
 
 // Debug element and status tracker
 let debugElement = null;
@@ -22,6 +22,9 @@ let apiStatus = {
     coinbase: 'untested',
     coingecko: 'untested'
 };
+
+// Track initialization state
+let initialized = false;
 
 // Format currency
 const formatCurrency = (amount, currency = 'USD') => {
@@ -55,8 +58,41 @@ const formatVolume = (volume) => {
 
 // Update time display
 const updateTimeDisplay = () => {
+    if (!updateTimeElement) return;
     const now = new Date();
     updateTimeElement.textContent = now.toLocaleTimeString();
+};
+
+// Create manual update button for direct interaction
+const createManualUpdateButton = () => {
+    const btnContainer = document.createElement('div');
+    btnContainer.style.margin = '15px 0';
+    
+    const btn = document.createElement('button');
+    btn.id = 'manual-update-button';
+    btn.textContent = 'Update Bitcoin Price';
+    btn.style.padding = '8px 15px';
+    btn.style.background = '#f7931a';
+    btn.style.color = 'white';
+    btn.style.border = 'none';
+    btn.style.borderRadius = '4px';
+    btn.style.cursor = 'pointer';
+    btn.style.fontWeight = 'bold';
+    
+    btn.onclick = function() {
+        console.log("Manual update button clicked");
+        fetchBitcoinPrice();
+    };
+    
+    btnContainer.appendChild(btn);
+    
+    const container = document.querySelector('#bitcoin-price .container');
+    if (container) {
+        container.appendChild(btnContainer);
+        console.log('Added manual update button to page');
+    } else {
+        console.error('Could not find container for manual update button');
+    }
 };
 
 // Create a status display
@@ -96,7 +132,7 @@ const createStatusDisplay = () => {
     const container = document.querySelector('#bitcoin-price .container');
     if (container) {
         container.appendChild(statusContainer);
-        addDebugOutput('Added API status display');
+        console.log('Added API status display');
     }
 };
 
@@ -113,7 +149,7 @@ const updateApiStatus = (api, status, message = '') => {
         }
     }
     
-    addDebugOutput(`API Status: ${api} is ${status} ${message}`);
+    console.log(`API Status: ${api} is ${status} ${message}`);
 };
 
 // Add debug output for troubleshooting
@@ -181,11 +217,11 @@ const showNotification = (message, type = 'success') => {
 // Display the Bitcoin price
 const displayPrice = (price, source) => {
     if (!priceElement) {
-        addDebugOutput('ERROR: Price element not found for display');
+        console.error('ERROR: Price element not found for display');
         return;
     }
     
-    addDebugOutput(`Displaying price: ${price} from ${source}`);
+    console.log(`Displaying price: ${price} from ${source}`);
     priceElement.textContent = formatCurrency(price);
     priceElement.classList.remove('loading', 'error');
     priceElement.classList.add('updated');
@@ -213,14 +249,14 @@ const displayPrice = (price, source) => {
             source: source
         }));
     } catch (e) {
-        addDebugOutput(`Failed to cache price: ${e.message}`);
+        console.error(`Failed to cache price: ${e.message}`);
     }
 };
 
 // Set error state with message
 const setErrorState = (element, message) => {
     if (!element) {
-        addDebugOutput(`ERROR: Can't set error state on null element (${message})`);
+        console.error(`ERROR: Can't set error state on null element (${message})`);
         return;
     }
     
@@ -229,13 +265,31 @@ const setErrorState = (element, message) => {
     element.textContent = message || 'Error';
     
     // Also show in debug panel
-    addDebugOutput(`Error displayed: "${message}"`);
+    console.log(`Error displayed: "${message}"`);
+};
+
+// Find the DOM elements
+const findDOMElements = () => {
+    priceElement = document.getElementById('price');
+    priceChangeElement = document.getElementById('price-change');
+    priceHighElement = document.getElementById('price-high');
+    priceLowElement = document.getElementById('price-low');
+    volumeElement = document.getElementById('volume');
+    updateTimeElement = document.getElementById('update-time');
+    
+    if (!priceElement) {
+        console.error('CRITICAL: Bitcoin price element not found! (id="price")');
+        return false;
+    }
+    
+    console.log('DOM elements found, ready to update prices');
+    return true;
 };
 
 // Fetch Bitcoin price from Coinbase API
 const fetchBitcoinPrice = async () => {
-    if (!priceElement) {
-        addDebugOutput('ERROR: Price element not found, cannot update price');
+    // Make sure we have the DOM elements
+    if (!findDOMElements()) {
         return;
     }
     
@@ -245,12 +299,12 @@ const fetchBitcoinPrice = async () => {
     }
     
     try {
-        addDebugOutput('Fetching price from Coinbase API...');
+        console.log('Fetching price from Coinbase API...');
         updateApiStatus('coinbase', 'testing');
         
         // Make the API call to Coinbase
         const priceUrl = `${COINBASE_API}/prices/BTC-USD/spot`;
-        addDebugOutput(`Requesting: ${priceUrl}`);
+        console.log(`Requesting: ${priceUrl}`);
         
         const response = await fetch(priceUrl, {
             method: 'GET',
@@ -277,7 +331,7 @@ const fetchBitcoinPrice = async () => {
             throw new Error(`Invalid price value: ${data.data.amount}`);
         }
         
-        addDebugOutput(`Coinbase price: ${price}`);
+        console.log(`Coinbase price: ${price}`);
         updateApiStatus('coinbase', 'working');
         
         // Display the price
@@ -285,7 +339,7 @@ const fetchBitcoinPrice = async () => {
         
         return true; // Success
     } catch (error) {
-        addDebugOutput(`Coinbase API error: ${error.message}`);
+        console.error(`Coinbase API error: ${error.message}`);
         
         // Try CoinGecko as fallback (confirmed working)
         return fetchCoinGeckoPrice();
@@ -295,11 +349,11 @@ const fetchBitcoinPrice = async () => {
 // Fetch Bitcoin price from CoinGecko API as backup
 const fetchCoinGeckoPrice = async () => {
     try {
-        addDebugOutput('Trying CoinGecko API as fallback...');
+        console.log('Trying CoinGecko API as fallback...');
         updateApiStatus('coingecko', 'testing');
         
         const url = `${COINGECKO_API}/simple/price?ids=bitcoin&vs_currencies=usd`;
-        addDebugOutput(`Requesting: ${url}`);
+        console.log(`Requesting: ${url}`);
         
         const response = await fetch(url);
         
@@ -316,7 +370,7 @@ const fetchCoinGeckoPrice = async () => {
         }
         
         const price = data.bitcoin.usd;
-        addDebugOutput(`CoinGecko price: ${price}`);
+        console.log(`CoinGecko price: ${price}`);
         updateApiStatus('coingecko', 'working');
         
         // Display the price
@@ -327,7 +381,7 @@ const fetchCoinGeckoPrice = async () => {
         
         return true; // Success
     } catch (error) {
-        addDebugOutput(`CoinGecko API error: ${error.message}`);
+        console.error(`CoinGecko API error: ${error.message}`);
         updateApiStatus('coingecko', 'failed', error.message);
         
         // Try to use cached price if available
@@ -336,13 +390,13 @@ const fetchCoinGeckoPrice = async () => {
             if (cachedPrice) {
                 const parsedCache = JSON.parse(cachedPrice);
                 if (parsedCache && parsedCache.price) {
-                    addDebugOutput(`Using cached price: ${parsedCache.price} from ${parsedCache.source}`);
+                    console.log(`Using cached price: ${parsedCache.price} from ${parsedCache.source}`);
                     displayPrice(parsedCache.price, `cached-${parsedCache.source}`);
                     return true;
                 }
             }
         } catch (e) {
-            addDebugOutput(`Error accessing cached price: ${e.message}`);
+            console.error(`Error accessing cached price: ${e.message}`);
         }
         
         // All APIs failed, show error state
@@ -354,12 +408,12 @@ const fetchCoinGeckoPrice = async () => {
 
 // Fetch supplementary Bitcoin data from CoinGecko
 const fetchSupplementaryData = async () => {
-    if (!priceChangeElement || !priceHighElement || !priceLowElement || !volumeElement) {
-        addDebugOutput('WARNING: Some supplementary elements not found');
+    if (!findDOMElements()) {
+        return;
     }
     
     try {
-        addDebugOutput('Fetching supplementary data from CoinGecko...');
+        console.log('Fetching supplementary data from CoinGecko...');
         
         const response = await fetch(COINGECKO_SIMPLE_API);
         
@@ -368,7 +422,7 @@ const fetchSupplementaryData = async () => {
         }
         
         const data = await response.json();
-        addDebugOutput('Supplementary data received');
+        console.log('Supplementary data received');
         
         if (!data.bitcoin) {
             throw new Error('No Bitcoin data in CoinGecko response');
@@ -383,7 +437,7 @@ const fetchSupplementaryData = async () => {
             priceChangeElement.textContent = formatPercentage(priceChange);
             priceChangeElement.classList.remove('loading', 'error');
             priceChangeElement.classList.add(priceChange >= 0 ? 'positive' : 'negative');
-            addDebugOutput(`Updated price change: ${priceChange}%`);
+            console.log(`Updated price change: ${priceChange}%`);
         }
         
         // Estimate high/low based on current price
@@ -391,29 +445,29 @@ const fetchSupplementaryData = async () => {
             const highPrice = currentPrice * 1.01; // Estimate
             priceHighElement.textContent = formatCurrency(highPrice);
             priceHighElement.classList.remove('loading', 'error');
-            addDebugOutput(`Updated high: ${highPrice}`);
+            console.log(`Updated high: ${highPrice}`);
         }
         
         if (priceLowElement) {
             const lowPrice = currentPrice * 0.99; // Estimate
             priceLowElement.textContent = formatCurrency(lowPrice);
             priceLowElement.classList.remove('loading', 'error');
-            addDebugOutput(`Updated low: ${lowPrice}`);
+            console.log(`Updated low: ${lowPrice}`);
         }
         
         // Update volume if available
         if (volumeElement && btcData.usd_24h_vol) {
             volumeElement.textContent = formatVolume(btcData.usd_24h_vol);
             volumeElement.classList.remove('loading', 'error');
-            addDebugOutput(`Updated volume: ${btcData.usd_24h_vol}`);
+            console.log(`Updated volume: ${btcData.usd_24h_vol}`);
         } else if (volumeElement) {
             volumeElement.textContent = formatVolume(currentPrice * 1000000); // Rough estimate
             volumeElement.classList.remove('loading', 'error');
-            addDebugOutput('Updated volume with estimate');
+            console.log('Updated volume with estimate');
         }
         
     } catch (error) {
-        addDebugOutput(`Error fetching supplementary data: ${error.message}`);
+        console.error(`Error fetching supplementary data: ${error.message}`);
         
         // Use estimates based on current price
         try {
@@ -422,19 +476,16 @@ const fetchSupplementaryData = async () => {
                 if (priceHighElement) priceHighElement.textContent = formatCurrency(price * 1.02);
                 if (priceLowElement) priceLowElement.textContent = formatCurrency(price * 0.98);
                 if (volumeElement) volumeElement.textContent = formatVolume(price * 1000000);
-                addDebugOutput('Used current price for estimates');
+                console.log('Used current price for estimates');
             }
         } catch (e) {
-            addDebugOutput(`Failed to set estimates: ${e.message}`);
+            console.error(`Failed to set estimates: ${e.message}`);
         }
     }
 };
 
-// Initialize updates
-const initPriceUpdates = () => {
-    addDebugOutput('Initializing Bitcoin price updates');
-    
-    // Add styles
+// Add styles needed by the Bitcoin price widget
+const addStyles = () => {
     const style = document.createElement('style');
     style.textContent = `
         .loading {
@@ -460,32 +511,95 @@ const initPriceUpdates = () => {
             0% { background-color: rgba(76, 175, 80, 0.2); }
             100% { background-color: transparent; }
         }
+        #bitcoin-price .container {
+            position: relative;
+        }
     `;
     document.head.appendChild(style);
+    console.log('Added Bitcoin price widget styles');
+};
+
+// Initialize updates
+const initPriceUpdates = () => {
+    console.log('Initializing Bitcoin price updates');
+    
+    // Already initialized?
+    if (initialized) {
+        console.log('Price updates already initialized, skipping');
+        return;
+    }
+    initialized = true;
+    
+    // Add styles first
+    addStyles();
+    
+    // Find DOM elements
+    if (!findDOMElements()) {
+        console.error('Failed to find DOM elements - will retry in 1 second');
+        setTimeout(initPriceUpdates, 1000);
+        return;
+    }
     
     // Create status display
     createStatusDisplay();
     
-    // Check elements
-    if (!priceElement) {
-        addDebugOutput('CRITICAL ERROR: Price element not found. Check HTML for id="price"');
-        return;
-    }
-    
-    addDebugOutput('DOM check complete. Starting price updates...');
+    // Add manual update button (guaranteed way for user to get price)
+    createManualUpdateButton();
     
     // Initial fetch - use the best API first
-    fetchBitcoinPrice();
+    console.log('Starting initial Bitcoin price fetch');
+    fetchBitcoinPrice().then(success => {
+        if (!success) {
+            console.warn('Initial price fetch failed, will retry');
+        }
+    }).catch(err => {
+        console.error('Error in initial price fetch:', err);
+    });
     
     // Set up intervals
-    setInterval(fetchBitcoinPrice, PRICE_UPDATE_INTERVAL);
-    setInterval(fetchSupplementaryData, SUPPLEMENTARY_DATA_INTERVAL);
+    console.log(`Setting up update intervals: Price=${PRICE_UPDATE_INTERVAL/1000}s, Data=${SUPPLEMENTARY_DATA_INTERVAL/1000}s`);
+    setInterval(() => {
+        fetchBitcoinPrice().catch(err => {
+            console.error('Error in price update:', err);
+        });
+    }, PRICE_UPDATE_INTERVAL);
     
-    addDebugOutput(`Update intervals set: Price=${PRICE_UPDATE_INTERVAL/1000}s, Data=${SUPPLEMENTARY_DATA_INTERVAL/1000}s`);
+    setInterval(() => {
+        fetchSupplementaryData().catch(err => {
+            console.error('Error in supplementary data update:', err);
+        });
+    }, SUPPLEMENTARY_DATA_INTERVAL);
     
     // Show initialization complete message
     showNotification('Bitcoin price updates initialized', 'success');
 };
 
-// Start updates when DOM is loaded
-document.addEventListener('DOMContentLoaded', initPriceUpdates); 
+// Ensure the script works in all environments
+const ensureInitialization = () => {
+    // Try multiple event listeners to make sure it runs
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        console.log('Document already ready, initializing now');
+        setTimeout(initPriceUpdates, 100);
+    } else {
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOMContentLoaded event fired, initializing');
+            setTimeout(initPriceUpdates, 100);
+        });
+        
+        window.addEventListener('load', () => {
+            console.log('Window load event fired, initializing');
+            setTimeout(initPriceUpdates, 100);
+        });
+    }
+    
+    // Fallback if those events somehow don't fire
+    setTimeout(() => {
+        if (!initialized) {
+            console.log('Fallback initialization after timeout');
+            initPriceUpdates();
+        }
+    }, 2000);
+};
+
+// Start the initialization process
+ensureInitialization(); 
