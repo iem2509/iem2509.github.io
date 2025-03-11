@@ -36,7 +36,7 @@ function applyTheme(themeName, skinName) {
     document.body.classList.remove('skin-minimal', 'skin-dark', 'skin-vibrant', 'skin-crypto');
     
     // Validate theme name
-    const validThemes = ['classic', 'modern', 'terminal'];
+    const validThemes = ['classic', 'modern', 'terminal', 'contemporary'];
     const theme = validThemes.includes(themeName) ? themeName : 'classic';
     
     // Validate skin name
@@ -566,6 +566,446 @@ function getThemeLayout(theme) {
                 font-family: var(--terminal-font);
                 border-top: 1px solid var(--terminal-grid);
             }
+        `,
+        
+        // Contemporary theme - modern, clean design following current style guides
+        contemporary: `
+            /* Contemporary theme with modern design principles */
+            .theme-contemporary {
+                --font-primary: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                --font-secondary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                --spacing-unit: 8px;
+                --radius-sm: 8px;
+                --radius-md: 12px;
+                --radius-lg: 16px;
+                --shadow-sm: 0px 1px 2px rgba(0, 0, 0, 0.05);
+                --shadow-md: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -1px rgba(0, 0, 0, 0.06);
+                --shadow-lg: 0px 10px 15px -3px rgba(0, 0, 0, 0.1), 0px 4px 6px -2px rgba(0, 0, 0, 0.05);
+                --transition-all: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            
+            /* Add Inter font if not already included */
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+            
+            /* Global styles */
+            .theme-contemporary body {
+                font-family: var(--font-primary);
+                line-height: 1.5;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+            }
+            
+            .theme-contemporary .header {
+                padding: calc(var(--spacing-unit) * 2) 0;
+                background: white;
+                box-shadow: var(--shadow-sm);
+                position: sticky;
+                top: 0;
+                z-index: 100;
+            }
+            
+            .theme-contemporary .logo h1 {
+                font-weight: 700;
+                font-size: 1.5rem;
+                letter-spacing: -0.025em;
+            }
+            
+            .theme-contemporary .nav ul {
+                display: flex;
+                gap: calc(var(--spacing-unit) * 3);
+            }
+            
+            .theme-contemporary .nav ul li a {
+                font-weight: 500;
+                font-size: 0.9375rem;
+                color: #374151;
+                text-decoration: none;
+                transition: var(--transition-all);
+                padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 1.5);
+                border-radius: var(--radius-sm);
+            }
+            
+            .theme-contemporary .nav ul li a:hover {
+                background-color: #F3F4F6;
+            }
+            
+            .theme-contemporary .nav ul li a[aria-current="page"] {
+                color: #2563EB;
+                font-weight: 600;
+            }
+            
+            /* Price section */
+            .theme-contemporary .price-section {
+                padding: calc(var(--spacing-unit) * 8) 0;
+                background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+            }
+            
+            .theme-contemporary .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 calc(var(--spacing-unit) * 3);
+            }
+            
+            .theme-contemporary .price-card {
+                background: white;
+                border-radius: var(--radius-lg);
+                box-shadow: var(--shadow-lg);
+                overflow: hidden;
+                max-width: 800px;
+                margin: 0 auto;
+                position: relative;
+            }
+            
+            .theme-contemporary .price-card h2 {
+                font-size: 1.25rem;
+                font-weight: 600;
+                color: #111827;
+                margin: 0;
+                padding: calc(var(--spacing-unit) * 3);
+                border-bottom: 1px solid #E5E7EB;
+                letter-spacing: -0.025em;
+            }
+            
+            .theme-contemporary .price-display {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                padding: calc(var(--spacing-unit) * 6) calc(var(--spacing-unit) * 3);
+                background: #F9FAFB;
+                position: relative;
+            }
+            
+            .theme-contemporary #price {
+                font-size: 3.5rem;
+                font-weight: 700;
+                color: #111827 !important;
+                letter-spacing: -0.05em;
+                line-height: 1;
+                margin-bottom: calc(var(--spacing-unit) * 2);
+            }
+            
+            .theme-contemporary #price-change {
+                font-size: 1rem;
+                font-weight: 600;
+                padding: calc(var(--spacing-unit) * 0.75) calc(var(--spacing-unit) * 2);
+                border-radius: 9999px;
+            }
+            
+            .theme-contemporary .price-details {
+                padding: calc(var(--spacing-unit) * 3);
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: calc(var(--spacing-unit) * 2);
+            }
+            
+            .theme-contemporary .detail-item {
+                background: #F9FAFB;
+                border-radius: var(--radius-md);
+                padding: calc(var(--spacing-unit) * 2);
+                display: flex;
+                flex-direction: column;
+                gap: calc(var(--spacing-unit) * 1);
+                transition: var(--transition-all);
+            }
+            
+            .theme-contemporary .detail-item:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-md);
+            }
+            
+            .theme-contemporary .label {
+                font-size: 0.875rem;
+                font-weight: 500;
+                color: #6B7280;
+            }
+            
+            .theme-contemporary .detail-item span:not(.label) {
+                font-size: 1.125rem;
+                font-weight: 600;
+                color: #111827;
+            }
+            
+            .theme-contemporary .last-updated {
+                padding: calc(var(--spacing-unit) * 2) calc(var(--spacing-unit) * 3);
+                border-top: 1px solid #E5E7EB;
+                font-size: 0.875rem;
+                color: #6B7280;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .theme-contemporary #direct-update {
+                background: #2563EB;
+                color: white;
+                font-weight: 500;
+                padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 3) !important;
+                border-radius: var(--radius-md);
+                border: none;
+                transition: var(--transition-all);
+                box-shadow: var(--shadow-sm);
+                cursor: pointer;
+            }
+            
+            .theme-contemporary #direct-update:hover {
+                background: #1D4ED8;
+                transform: translateY(-1px);
+                box-shadow: var(--shadow-md);
+            }
+            
+            .theme-contemporary #direct-update:active {
+                transform: translateY(1px);
+            }
+            
+            /* Price indicators */
+            .theme-contemporary .positive {
+                color: #059669 !important;
+                background-color: #ECFDF5;
+            }
+            
+            .theme-contemporary .negative {
+                color: #DC2626 !important;
+                background-color: #FEF2F2;
+            }
+            
+            /* Responsive adjustments */
+            @media (max-width: 768px) {
+                .theme-contemporary .price-details {
+                    grid-template-columns: 1fr;
+                }
+                
+                .theme-contemporary #price {
+                    font-size: 2.5rem;
+                }
+            }
+            
+            /* Quote section */
+            .theme-contemporary .quote-section {
+                padding: calc(var(--spacing-unit) * 8) 0;
+                background: white;
+            }
+            
+            .theme-contemporary .quote-section h2 {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: #111827;
+                margin-bottom: calc(var(--spacing-unit) * 4);
+                text-align: center;
+                letter-spacing: -0.025em;
+            }
+            
+            .theme-contemporary .quote-card {
+                background: #F9FAFB;
+                border-radius: var(--radius-lg);
+                padding: calc(var(--spacing-unit) * 6);
+                box-shadow: var(--shadow-md);
+                position: relative;
+                max-width: 800px;
+                margin: 0 auto;
+            }
+            
+            .theme-contemporary .quote-card::before {
+                content: '"';
+                position: absolute;
+                top: calc(var(--spacing-unit) * 2);
+                left: calc(var(--spacing-unit) * 3);
+                font-size: 5rem;
+                color: #E5E7EB;
+                font-family: Georgia, serif;
+                line-height: 1;
+            }
+            
+            .theme-contemporary .quote {
+                font-size: 1.25rem;
+                line-height: 1.6;
+                color: #1F2937;
+                margin-bottom: calc(var(--spacing-unit) * 3);
+                position: relative;
+                z-index: 1;
+            }
+            
+            .theme-contemporary .author {
+                font-weight: 600;
+                color: #111827;
+            }
+            
+            .theme-contemporary .date {
+                color: #6B7280;
+            }
+            
+            /* Resources section */
+            .theme-contemporary .resources-section {
+                padding: calc(var(--spacing-unit) * 8) 0;
+                background: #F3F4F6;
+            }
+            
+            .theme-contemporary .resources-section h2 {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: #111827;
+                margin-bottom: calc(var(--spacing-unit) * 6);
+                text-align: center;
+                letter-spacing: -0.025em;
+            }
+            
+            .theme-contemporary .resources-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: calc(var(--spacing-unit) * 3);
+            }
+            
+            .theme-contemporary .resource-card {
+                background: white;
+                border-radius: var(--radius-lg);
+                padding: calc(var(--spacing-unit) * 4);
+                box-shadow: var(--shadow-md);
+                transition: var(--transition-all);
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .theme-contemporary .resource-card:hover {
+                transform: translateY(-4px);
+                box-shadow: var(--shadow-lg);
+            }
+            
+            .theme-contemporary .card-icon {
+                width: 48px;
+                height: 48px;
+                background: #EFF6FF;
+                border-radius: var(--radius-md);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: calc(var(--spacing-unit) * 3);
+            }
+            
+            .theme-contemporary .card-icon svg {
+                width: 24px;
+                height: 24px;
+                color: #2563EB;
+            }
+            
+            .theme-contemporary .resource-card h3 {
+                font-size: 1.125rem;
+                font-weight: 600;
+                color: #111827;
+                margin-bottom: calc(var(--spacing-unit) * 2);
+                letter-spacing: -0.025em;
+            }
+            
+            .theme-contemporary .resource-card p {
+                color: #4B5563;
+                margin-bottom: calc(var(--spacing-unit) * 3);
+                flex-grow: 1;
+            }
+            
+            .theme-contemporary .btn-primary {
+                background: #2563EB;
+                color: white;
+                font-weight: 500;
+                padding: calc(var(--spacing-unit) * 1.25) calc(var(--spacing-unit) * 2.5);
+                border-radius: var(--radius-md);
+                text-decoration: none;
+                display: inline-block;
+                transition: var(--transition-all);
+                text-align: center;
+            }
+            
+            .theme-contemporary .btn-primary:hover {
+                background: #1D4ED8;
+            }
+            
+            /* Footer */
+            .theme-contemporary .footer {
+                background: #1F2937;
+                color: #E5E7EB;
+                padding: calc(var(--spacing-unit) * 8) 0 calc(var(--spacing-unit) * 4);
+            }
+            
+            .theme-contemporary .footer-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: calc(var(--spacing-unit) * 6);
+                margin-bottom: calc(var(--spacing-unit) * 6);
+            }
+            
+            .theme-contemporary .footer h4 {
+                font-size: 1rem;
+                font-weight: 600;
+                margin-bottom: calc(var(--spacing-unit) * 3);
+                color: white;
+            }
+            
+            .theme-contemporary .footer ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .theme-contemporary .footer ul li {
+                margin-bottom: calc(var(--spacing-unit) * 1.5);
+            }
+            
+            .theme-contemporary .footer a {
+                color: #D1D5DB;
+                text-decoration: none;
+                transition: var(--transition-all);
+            }
+            
+            .theme-contemporary .footer a:hover {
+                color: white;
+            }
+            
+            .theme-contemporary .footer-bottom {
+                padding-top: calc(var(--spacing-unit) * 3);
+                border-top: 1px solid #374151;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: calc(var(--spacing-unit) * 2);
+            }
+            
+            .theme-contemporary .small-text {
+                font-size: 0.875rem;
+                color: #9CA3AF;
+            }
+            
+            /* Theme switcher styling */
+            .theme-contemporary #theme-skin-switcher {
+                background: white;
+                border-radius: var(--radius-lg);
+                padding: calc(var(--spacing-unit) * 3);
+                box-shadow: var(--shadow-md);
+                margin-top: calc(var(--spacing-unit) * 4) !important;
+            }
+            
+            .theme-contemporary .switcher-title {
+                font-weight: 600;
+                color: #111827;
+                margin-bottom: calc(var(--spacing-unit) * 2);
+            }
+            
+            .theme-contemporary .theme-button, 
+            .theme-contemporary .skin-button {
+                padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 2) !important;
+                border-radius: var(--radius-md) !important;
+                font-weight: 500 !important;
+                font-size: 0.875rem !important;
+                transition: var(--transition-all) !important;
+            }
+            
+            .theme-contemporary .theme-button:hover, 
+            .theme-contemporary .skin-button:hover {
+                transform: translateY(-2px) !important;
+            }
+            
+            .theme-contemporary .active-button {
+                box-shadow: 0 0 0 2px #2563EB !important;
+            }
         `
     };
     
@@ -833,18 +1273,22 @@ function getSkinStyles(skin) {
                 box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
             }
             
+            .skin-vibrant .card-icon {
+                color: var(--bitcoin-orange);
+            }
+            
             .skin-vibrant .footer {
                 background: #2c3e50;
                 color: #ecf0f1;
             }
             
             .skin-vibrant .footer a {
-                color: #3498db;
+                color: var(--bitcoin-orange-light);
                 transition: color 0.3s;
             }
             
             .skin-vibrant .footer a:hover {
-                color: #2980b9;
+                color: var(--bitcoin-orange);
             }
         `,
         
@@ -1145,7 +1589,8 @@ function addThemeSkinSwitcher() {
     const themes = [
         { name: 'classic', label: 'Classic', color: '#f0f0f0' },
         { name: 'modern', label: 'Modern', color: '#333333' },
-        { name: 'terminal', label: 'Terminal', color: '#0a0e17' }
+        { name: 'terminal', label: 'Terminal', color: '#0a0e17' },
+        { name: 'contemporary', label: 'Contemporary', color: '#ffffff' }
     ];
     
     themes.forEach(theme => {
