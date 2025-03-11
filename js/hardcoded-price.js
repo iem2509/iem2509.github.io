@@ -168,91 +168,514 @@ function getThemeStyles(theme) {
             .negative { color: #ef5350 !important; text-shadow: 0 0 10px rgba(239, 83, 80, 0.3); }
         `,
         
-        // Vibrant, colorful theme with bold elements
+        // Vibrant, refined theme with modern design - UPDATED
         vibrant: `
-            .price-section {
-                background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
-                color: #fff;
+            /* Global styling improvements */
+            body.theme-vibrant .header {
+                background: linear-gradient(90deg, #3a7bd5, #00d2ff);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             }
-            .price-card {
-                background: rgba(255, 255, 255, 0.95);
-                border-radius: 16px;
-                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(0, 0, 0, 0.07);
-                border: none;
-                overflow: hidden;
-                position: relative;
-            }
-            .price-card::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 6px;
-                background: linear-gradient(90deg, #ff9a9e, #fad0c4, #fad0c4, #fbc2eb);
-                background-size: 300% 100%;
-                animation: gradient-slide 15s ease infinite;
-            }
-            @keyframes gradient-slide {
-                0% { background-position: 0% 50%; }
-                50% { background-position: 100% 50%; }
-                100% { background-position: 0% 50%; }
-            }
-            #price {
-                color: #6a11cb !important;
-                font-weight: 800;
-                letter-spacing: -1px;
-                font-size: 2.8rem;
-                background: linear-gradient(90deg, #6a11cb, #2575fc);
+            
+            body.theme-vibrant .logo h1 {
+                background: linear-gradient(90deg, #fff, #e0e0e0);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 text-shadow: none;
             }
+            
+            body.theme-vibrant .nav ul li a {
+                color: white;
+                font-weight: 500;
+                position: relative;
+                transition: all 0.3s;
+            }
+            
+            body.theme-vibrant .nav ul li a:after {
+                content: '';
+                position: absolute;
+                width: 0;
+                height: 2px;
+                bottom: -2px;
+                left: 0;
+                background: white;
+                transition: width 0.3s;
+            }
+            
+            body.theme-vibrant .nav ul li a:hover:after {
+                width: 100%;
+            }
+            
+            /* Price section styling */
+            .price-section {
+                background: linear-gradient(120deg, #3a7bd5, #00d2ff);
+                color: #fff;
+                padding: 50px 0;
+            }
+            
+            .price-card {
+                background: rgba(255, 255, 255, 0.9);
+                border-radius: 16px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+                border: none;
+                overflow: hidden;
+                padding: 30px;
+                position: relative;
+            }
+            
+            .price-card h2 {
+                color: #2c3e50;
+                font-weight: 700;
+                margin-bottom: 20px;
+                font-size: 1.8rem;
+            }
+            
+            #price {
+                color: #2980b9 !important;
+                font-weight: 700;
+                font-size: 2.5rem;
+                position: relative;
+                display: inline-block;
+            }
+            
             .price-display {
-                background: rgba(106, 17, 203, 0.05);
+                background: rgba(41, 128, 185, 0.05);
+                padding: 20px;
+                border-radius: 12px;
+                margin: 15px 0;
+                text-align: center;
+                border-bottom: 3px solid #3498db;
+            }
+            
+            #price-change {
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin-left: 15px;
+            }
+            
+            .detail-item {
+                background: rgba(41, 128, 185, 0.05);
+                border-radius: 8px;
+                padding: 12px 15px;
+                margin: 10px 0;
+                transition: all 0.3s ease;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .detail-item:hover {
+                background: rgba(41, 128, 185, 0.1);
+                transform: translateY(-2px);
+            }
+            
+            .price-section span {
+                color: #2c3e50;
+            }
+            
+            .label {
+                color: #7f8c8d;
+                font-weight: 600;
+            }
+            
+            .last-updated {
+                color: #7f8c8d;
+                font-size: 0.9rem;
+                text-align: center;
+                margin-top: 15px;
+            }
+            
+            /* Button styling */
+            #direct-update {
+                background: linear-gradient(90deg, #3a7bd5, #00d2ff);
+                color: white;
+                box-shadow: 0 6px 15px rgba(41, 128, 185, 0.3);
+                transition: all 0.3s ease;
+                border: none;
+                padding: 12px 24px !important;
+                font-weight: 600 !important;
+                border-radius: 8px !important;
+                display: block;
+                margin: 20px auto 10px;
+                outline: none;
+            }
+            
+            #direct-update:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 20px rgba(41, 128, 185, 0.4);
+            }
+            
+            #direct-update:active {
+                transform: translateY(1px);
+            }
+            
+            /* Dynamic price indicators */
+            .positive { color: #27ae60 !important; font-weight: 600; }
+            .negative { color: #e74c3c !important; font-weight: 600; }
+            
+            /* Other UI improvements */
+            body.theme-vibrant .quote-section {
+                background: #ecf0f1;
+            }
+            
+            body.theme-vibrant .quote-card {
+                border-left: 5px solid #3498db;
+            }
+            
+            body.theme-vibrant .resources-section {
+                background: white;
+            }
+            
+            body.theme-vibrant .resource-card {
+                border-radius: 10px;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+                transition: all 0.3s ease;
+            }
+            
+            body.theme-vibrant .resource-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            }
+            
+            body.theme-vibrant .footer {
+                background: #2c3e50;
+                color: #ecf0f1;
+            }
+            
+            body.theme-vibrant .footer a {
+                color: #3498db;
+                transition: color 0.3s;
+            }
+            
+            body.theme-vibrant .footer a:hover {
+                color: #2980b9;
+            }
+            
+            /* Theme switcher styling */
+            #theme-switcher {
+                background: rgba(255, 255, 255, 0.8);
+                border-radius: 30px;
+                padding: 5px;
+            }
+            
+            #theme-switcher .theme-button {
+                transition: transform 0.3s, box-shadow 0.3s;
+            }
+            
+            #theme-switcher .theme-button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+            }
+        `,
+        
+        // NEW THEME: Crypto - Bitcoin inspired with blockchain elements
+        crypto: `
+            /* Global styling */
+            body.theme-crypto {
+                --bitcoin-orange: #f7931a;
+                --bitcoin-orange-light: #ffa940;
+                --bitcoin-orange-dark: #d97c06;
+                --blockchain-blue: #1c60ff;
+                --dark-navy: #0f172a;
+                --subtle-gray: #f8fafc;
+            }
+            
+            body.theme-crypto .header {
+                background: var(--dark-navy);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            }
+            
+            body.theme-crypto .logo h1 {
+                color: var(--bitcoin-orange);
+            }
+            
+            body.theme-crypto .nav ul li a {
+                color: white;
+                position: relative;
+            }
+            
+            body.theme-crypto .nav ul li a:after {
+                content: '';
+                position: absolute;
+                bottom: -4px;
+                left: 0;
+                width: 0;
+                height: 2px;
+                background: var(--bitcoin-orange);
+                transition: width 0.3s;
+            }
+            
+            body.theme-crypto .nav ul li a:hover:after {
+                width: 100%;
+            }
+            
+            /* Price section styling */
+            .price-section {
+                background: linear-gradient(135deg, var(--dark-navy) 0%, #1e293b 100%);
+                position: relative;
+                overflow: hidden;
+                padding: 50px 0;
+                color: white;
+            }
+            
+            /* Bitcoin symbol watermark */
+            .price-section:before {
+                content: '₿';
+                position: absolute;
+                color: rgba(247, 147, 26, 0.03);
+                font-size: 40rem;
+                right: -100px;
+                top: -100px;
+                line-height: 1;
+                font-weight: bold;
+                pointer-events: none;
+            }
+            
+            .price-card {
+                background: #ffffff;
+                border-radius: 16px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                border: none;
+                overflow: hidden;
+                position: relative;
+            }
+            
+            /* Blockchain pattern overlay */
+            .price-card:after {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                background-image: 
+                    linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)),
+                    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f7931a' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+                z-index: 0;
+                pointer-events: none;
+            }
+            
+            .price-card > * {
+                position: relative;
+                z-index: 1;
+            }
+            
+            .price-card h2 {
+                color: var(--dark-navy);
+                font-weight: 700;
+                text-align: center;
+                margin-bottom: 25px;
+                position: relative;
+                padding-bottom: 12px;
+            }
+            
+            .price-card h2:after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 80px;
+                height: 3px;
+                background: var(--bitcoin-orange);
+            }
+            
+            #price {
+                color: var(--bitcoin-orange) !important;
+                font-weight: 800;
+                font-size: 2.8rem;
+                display: block;
+                text-align: center;
+                font-family: 'Montserrat', sans-serif;
+            }
+            
+            .price-display {
+                background: rgba(247, 147, 26, 0.05);
                 padding: 25px;
                 border-radius: 12px;
                 margin: 20px 0;
+                border: 1px solid rgba(247, 147, 26, 0.1);
+                position: relative;
             }
+            
+            .price-display:before {
+                content: '₿';
+                position: absolute;
+                top: 10px;
+                left: 15px;
+                font-size: 1.2rem;
+                color: var(--bitcoin-orange);
+                opacity: 0.5;
+            }
+            
+            #price-change {
+                display: inline-block;
+                padding: 5px 10px;
+                border-radius: 30px;
+                font-weight: 600;
+                font-size: 1rem;
+                margin-left: 0;
+                margin-top: 10px;
+            }
+            
             .detail-item {
-                background: rgba(0, 0, 0, 0.02);
-                border-radius: 12px;
+                background: rgba(247, 147, 26, 0.03);
+                border-radius: 10px;
                 padding: 15px;
-                margin: 10px 0;
+                margin: 12px 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-left: 3px solid var(--bitcoin-orange);
                 transition: all 0.3s ease;
-                border-left: 4px solid #6a11cb;
             }
+            
             .detail-item:hover {
+                background: rgba(247, 147, 26, 0.07);
                 transform: translateX(5px);
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
             }
+            
             .price-section span {
-                color: #333;
+                color: #334155;
             }
+            
             .label {
-                color: #6a11cb;
-                font-weight: 700;
-                text-transform: uppercase;
-                font-size: 0.8rem;
-                letter-spacing: 1px;
+                color: #64748b;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 5px;
             }
+            
+            .label:before {
+                content: '';
+                display: inline-block;
+                width: 8px;
+                height: 8px;
+                background-color: var(--bitcoin-orange);
+                border-radius: 50%;
+            }
+            
+            .last-updated {
+                color: #64748b;
+                font-size: 0.9rem;
+                text-align: center;
+                margin-top: 20px;
+                font-style: italic;
+            }
+            
+            /* Button styling */
             #direct-update {
-                background: linear-gradient(90deg, #6a11cb, #2575fc);
-                box-shadow: 0 10px 20px rgba(106, 17, 203, 0.3);
+                background: var(--bitcoin-orange);
+                color: white;
+                box-shadow: 0 8px 15px rgba(247, 147, 26, 0.2);
                 transition: all 0.3s ease;
                 border: none;
-                padding: 15px 25px !important;
+                padding: 14px 30px !important;
                 font-weight: 700 !important;
-                border-radius: 30px !important;
+                border-radius: 8px !important;
+                position: relative;
+                overflow: hidden;
+                display: block;
+                margin: 25px auto 15px;
+                text-transform: uppercase;
                 letter-spacing: 0.5px;
             }
-            #direct-update:hover {
-                transform: translateY(-3px) scale(1.05);
-                box-shadow: 0 15px 25px rgba(106, 17, 203, 0.4);
+            
+            #direct-update:before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+                transition: all 0.6s;
             }
-            .positive { color: #00c853 !important; font-weight: 700; }
-            .negative { color: #ff1744 !important; font-weight: 700; }
-            .price-change { font-size: 1.2rem; font-weight: 700; }
+            
+            #direct-update:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 12px 20px rgba(247, 147, 26, 0.3);
+                background: var(--bitcoin-orange-dark);
+            }
+            
+            #direct-update:hover:before {
+                left: 100%;
+            }
+            
+            /* Price indicators */
+            .positive { 
+                color: #10b981 !important; 
+                font-weight: 700;
+                background-color: rgba(16, 185, 129, 0.1);
+            }
+            
+            .negative { 
+                color: #ef4444 !important; 
+                font-weight: 700; 
+                background-color: rgba(239, 68, 68, 0.1);
+            }
+            
+            /* Other UI improvements */
+            body.theme-crypto .quote-section {
+                background: var(--subtle-gray);
+            }
+            
+            body.theme-crypto .quote-card {
+                border-left: 5px solid var(--bitcoin-orange);
+                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.05);
+            }
+            
+            body.theme-crypto .resources-section {
+                background: white;
+            }
+            
+            body.theme-crypto .resource-card {
+                border-radius: 12px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+                border-top: 4px solid var(--bitcoin-orange);
+                transition: all 0.3s ease;
+            }
+            
+            body.theme-crypto .resource-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 35px rgba(0, 0, 0, 0.1);
+            }
+            
+            body.theme-crypto .card-icon {
+                color: var(--bitcoin-orange);
+            }
+            
+            body.theme-crypto .footer {
+                background: var(--dark-navy);
+                color: #e2e8f0;
+            }
+            
+            body.theme-crypto .footer a {
+                color: var(--bitcoin-orange-light);
+                transition: color 0.3s;
+            }
+            
+            body.theme-crypto .footer a:hover {
+                color: var(--bitcoin-orange);
+            }
+            
+            /* Theme switcher styling */
+            #theme-switcher {
+                background: rgba(255, 255, 255, 0.9);
+                border-radius: 40px;
+                padding: 8px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            }
+            
+            #theme-switcher .theme-button {
+                transition: transform 0.3s, box-shadow 0.3s;
+                font-weight: 700;
+            }
+            
+            #theme-switcher .theme-button:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            }
         `
     };
     
@@ -266,28 +689,39 @@ function addThemeSwitcher() {
     
     const switcherContainer = document.createElement('div');
     switcherContainer.id = 'theme-switcher';
-    switcherContainer.style.cssText = 'margin-top: 20px; display: flex; justify-content: center; gap: 10px;';
+    switcherContainer.style.cssText = 'margin-top: 20px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;';
     
     const themes = [
         { name: 'minimal', label: 'Minimal', color: '#c3cfe2' },
         { name: 'dark', label: 'Dark', color: '#303030' },
-        { name: 'vibrant', label: 'Vibrant', color: '#6a11cb' }
+        { name: 'vibrant', label: 'Vibrant', color: '#3a7bd5' },
+        { name: 'crypto', label: 'Crypto', color: '#f7931a' }
     ];
+    
+    // Get current theme from URL
+    const currentTheme = new URLSearchParams(window.location.search).get('theme') || 'minimal';
     
     themes.forEach(theme => {
         const button = document.createElement('a');
         button.href = `?theme=${theme.name}${isDebugMode() ? '&debug=on' : ''}`;
         button.className = 'theme-button';
         button.textContent = theme.label;
+        
+        // Highlight current theme
+        const isActive = currentTheme === theme.name;
+        
         button.style.cssText = `
-            padding: 8px 15px;
+            padding: 8px 16px;
             background-color: ${theme.color};
-            color: ${theme.name === 'dark' ? 'white' : 'black'};
+            color: ${['dark', 'vibrant'].includes(theme.name) ? 'white' : 'black'};
             text-decoration: none;
             border-radius: 20px;
             font-size: 12px;
-            font-weight: 600;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-weight: ${isActive ? '700' : '600'};
+            box-shadow: ${isActive ? '0 5px 10px rgba(0,0,0,0.2)' : '0 2px 5px rgba(0,0,0,0.1)'};
+            border: ${isActive ? '2px solid white' : 'none'};
+            transform: ${isActive ? 'scale(1.05)' : 'scale(1)'};
+            transition: all 0.3s ease;
         `;
         switcherContainer.appendChild(button);
     });
