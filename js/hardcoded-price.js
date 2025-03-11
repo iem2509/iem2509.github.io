@@ -1,6 +1,15 @@
-// Real-time price display script with reliable DOM updates
+// Real-time price display script with clean UI
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Real-time price script loaded');
+    // Check if debug mode is enabled via URL parameter
+    const debugMode = new URLSearchParams(window.location.search).get('debug') === 'on';
+    console.log('Real-time price script loaded', debugMode ? '(DEBUG MODE)' : '');
+    
+    // Remove debug borders if not in debug mode
+    if (!debugMode) {
+        document.querySelectorAll('.element-debug').forEach(el => {
+            el.classList.remove('element-debug');
+        });
+    }
     
     setTimeout(function() {
         fetchAndDisplayPrice();
@@ -12,6 +21,11 @@ window.addEventListener('load', function() {
     console.log('Window loaded, fetching price');
     fetchAndDisplayPrice();
 });
+
+// Check if debug mode is enabled
+function isDebugMode() {
+    return new URLSearchParams(window.location.search).get('debug') === 'on';
+}
 
 // Fetch and display price data from real API
 async function fetchAndDisplayPrice() {
@@ -43,9 +57,11 @@ async function fetchAndDisplayPrice() {
                 // Also fetch additional data
                 fetchSupplementaryData(price);
                 
-                // Add styles and success banner
+                // Add styles and success banner (only in debug mode)
                 addStyles();
-                addSuccessBanner('Live price data loaded successfully!');
+                if (isDebugMode()) {
+                    addSuccessBanner('Live price data loaded successfully!');
+                }
                 
                 return; // Success - exit function
             }
@@ -105,9 +121,11 @@ async function fetchAndDisplayPrice() {
                     currency: 'USD'
                 }).format(price * 0.99));
                 
-                // Add styles and success banner
+                // Add styles and success banner (only in debug mode)
                 addStyles();
-                addSuccessBanner('Live price data loaded successfully (CoinGecko)!');
+                if (isDebugMode()) {
+                    addSuccessBanner('Live price data loaded successfully (CoinGecko)!');
+                }
                 
                 return; // Success - exit function
             }
@@ -138,8 +156,10 @@ async function fetchAndDisplayPrice() {
         // Add styles
         addStyles();
         
-        // Add banner showing fallback price is being used
-        addSuccessBanner('Using recent price data (APIs unavailable)', 'warning');
+        // Add banner showing fallback price is being used (only in debug mode)
+        if (isDebugMode()) {
+            addSuccessBanner('Using recent price data (APIs unavailable)', 'warning');
+        }
     }
     
     // Always update the time
@@ -222,20 +242,32 @@ function formatVolume(volume) {
 function updateElementById(id, text) {
     const element = document.getElementById(id);
     if (element) {
-        console.log(`Found and updating element #${id} with: ${text}`);
+        if (isDebugMode()) {
+            console.log(`Found and updating element #${id} with: ${text}`);
+        }
         element.textContent = text;
         element.style.opacity = '1';
-        element.classList.add('updated');
+        
+        // Only add animation in non-debug mode to avoid flashiness
+        if (!isDebugMode()) {
+            element.classList.add('updated-subtle');
+        } else {
+            element.classList.add('updated');
+        }
     } else {
         console.error(`Element with ID ${id} not found!`);
-        // Try to find it by other means
-        const elements = document.querySelectorAll(`[id="${id}"], [class="${id}"], [name="${id}"]`);
-        if (elements.length > 0) {
-            console.log(`Found ${elements.length} alternative elements matching ${id}`);
-            elements.forEach(el => {
-                el.textContent = text;
-                el.style.opacity = '1';
-            });
+        
+        // Only do alternative search in debug mode
+        if (isDebugMode()) {
+            // Try to find it by other means
+            const elements = document.querySelectorAll(`[id="${id}"], [class="${id}"], [name="${id}"]`);
+            if (elements.length > 0) {
+                console.log(`Found ${elements.length} alternative elements matching ${id}`);
+                elements.forEach(el => {
+                    el.textContent = text;
+                    el.style.opacity = '1';
+                });
+            }
         }
     }
 }
@@ -249,6 +281,9 @@ function addStyles() {
     style.textContent = `
         .updated {
             animation: flashGreen 2s ease;
+        }
+        .updated-subtle {
+            transition: background-color 0.5s ease;
         }
         @keyframes flashGreen {
             0%, 100% { background-color: transparent; }
@@ -271,8 +306,9 @@ function addStyles() {
             font-weight: bold;
         }
         #price {
-            color: #000 !important;
+            color: white !important;
             opacity: 1 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
         .positive {
             color: #4caf50 !important;
@@ -280,12 +316,19 @@ function addStyles() {
         .negative {
             color: #f44336 !important;
         }
+        /* Fix black-on-grey issue */
+        .price-section span {
+            color: white;
+        }
     `;
     document.head.appendChild(style);
 }
 
 // Add a visible banner to confirm our script ran
 function addSuccessBanner(message, type = 'success') {
+    // Only show banners in debug mode
+    if (!isDebugMode()) return;
+    
     // Remove any existing banners
     const existingBanners = document.querySelectorAll('.success-banner, .warning-banner');
     existingBanners.forEach(banner => banner.remove());
