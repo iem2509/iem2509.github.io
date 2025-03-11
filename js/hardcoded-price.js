@@ -32,11 +32,11 @@ window.addEventListener('load', function() {
 // Apply theme and skin styles
 function applyTheme(themeName, skinName) {
     // Remove any existing theme and skin
-    document.body.classList.remove('theme-classic', 'theme-modern');
+    document.body.classList.remove('theme-classic', 'theme-modern', 'theme-terminal');
     document.body.classList.remove('skin-minimal', 'skin-dark', 'skin-vibrant', 'skin-crypto');
     
     // Validate theme name
-    const validThemes = ['classic', 'modern'];
+    const validThemes = ['classic', 'modern', 'terminal'];
     const theme = validThemes.includes(themeName) ? themeName : 'classic';
     
     // Validate skin name
@@ -63,6 +63,21 @@ function applyTheme(themeName, skinName) {
     // Add theme and skin switcher if it doesn't exist
     if (!document.getElementById('theme-skin-switcher')) {
         addThemeSkinSwitcher();
+    }
+    
+    // Set current time for terminal theme
+    if (theme === 'terminal') {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString();
+        const dateString = now.toLocaleDateString();
+        document.querySelector('.price-card').setAttribute('data-time', `${dateString} ${timeString}`);
+        
+        // Update time every minute
+        setInterval(() => {
+            const now = new Date();
+            document.querySelector('.price-card').setAttribute('data-time', 
+                `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`);
+        }, 60000);
     }
     
     console.log(`Theme applied: ${theme}, Skin: ${skin}`);
@@ -246,6 +261,310 @@ function getThemeLayout(theme) {
                 display: flex;
                 flex-direction: column;
                 justify-content: space-between;
+            }
+        `,
+        
+        // Terminal theme - trading terminal style layout
+        terminal: `
+            /* Terminal theme with trading terminal style */
+            .theme-terminal {
+                --terminal-bg: #0a0e17;
+                --terminal-text: #e2e8f0;
+                --terminal-accent: #38bdf8;
+                --terminal-grid: #1e293b;
+                --terminal-positive: #10b981;
+                --terminal-negative: #ef4444;
+                --terminal-neutral: #94a3b8;
+                --terminal-font: 'Courier New', monospace;
+            }
+            
+            .theme-terminal .header {
+                background: var(--terminal-bg);
+                border-bottom: 1px solid var(--terminal-accent);
+            }
+            
+            .theme-terminal .price-section {
+                background: var(--terminal-bg);
+                color: var(--terminal-text);
+                padding: 0;
+                font-family: var(--terminal-font);
+            }
+            
+            .theme-terminal .price-section .container {
+                width: 100%;
+                max-width: 100%;
+                padding: 0;
+            }
+            
+            .theme-terminal .price-card {
+                background: var(--terminal-bg);
+                color: var(--terminal-text);
+                max-width: 100%;
+                margin: 0;
+                padding: 0;
+                border-radius: 0;
+                box-shadow: none;
+                border: none;
+                display: grid;
+                grid-template-columns: 1fr 2fr 1fr;
+                grid-template-rows: auto 1fr;
+                grid-template-areas:
+                    "header header header"
+                    "price chart details";
+                min-height: 600px;
+            }
+            
+            .theme-terminal .price-card h2 {
+                grid-area: header;
+                margin: 0;
+                padding: 10px 20px;
+                background: #0f172a;
+                color: var(--terminal-accent);
+                font-family: var(--terminal-font);
+                font-size: 1.2rem;
+                font-weight: normal;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                border-bottom: 1px solid var(--terminal-grid);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .theme-terminal .price-card h2:after {
+                content: 'BTC/USD';
+                font-size: 0.9rem;
+                color: var(--terminal-neutral);
+            }
+            
+            .theme-terminal .price-display {
+                grid-area: price;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                padding: 30px;
+                margin: 0;
+                height: 100%;
+                border-right: 1px solid var(--terminal-grid);
+                background: #0f172a;
+            }
+            
+            .theme-terminal #price {
+                font-size: 3rem;
+                font-family: var(--terminal-font);
+                font-weight: bold;
+                color: var(--terminal-accent) !important;
+                margin-bottom: 15px;
+                position: relative;
+                padding-left: 15px;
+            }
+            
+            .theme-terminal #price:before {
+                content: '$';
+                position: absolute;
+                left: 0;
+                top: 5px;
+                font-size: 1.5rem;
+                color: var(--terminal-neutral);
+            }
+            
+            .theme-terminal #price-change {
+                font-size: 1.2rem;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-family: var(--terminal-font);
+                letter-spacing: 1px;
+            }
+            
+            /* Fake chart area */
+            .theme-terminal .price-card:before {
+                content: '';
+                grid-area: chart;
+                background-image: 
+                    linear-gradient(rgba(10, 14, 23, 0.7), rgba(10, 14, 23, 0.7)),
+                    url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='grid' width='20' height='20' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 20 0 L 0 0 0 20' fill='none' stroke='%231e293b' stroke-width='0.5'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='%230a0e17'/%3E%3Crect width='100%25' height='100%25' fill='url(%23grid)'/%3E%3Cpath d='M0,80 Q50,70 100,75 T200,85 T300,80 T400,70 T500,60 T600,80' stroke='%2338bdf8' fill='none' stroke-width='2'/%3E%3C/svg%3E");
+                background-size: cover;
+                border-right: 1px solid var(--terminal-grid);
+            }
+            
+            .theme-terminal .price-details {
+                grid-area: details;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                background: #0f172a;
+            }
+            
+            .theme-terminal .detail-item {
+                display: flex;
+                justify-content: space-between;
+                padding: 12px;
+                margin: 5px 0;
+                background: var(--terminal-bg);
+                border-left: none;
+                border-radius: 0;
+                border-bottom: 1px solid var(--terminal-grid);
+                font-family: var(--terminal-font);
+            }
+            
+            .theme-terminal .label {
+                color: var(--terminal-neutral);
+                font-size: 0.9rem;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            
+            .theme-terminal .label:before {
+                display: none;
+            }
+            
+            .theme-terminal .last-updated {
+                margin-top: auto;
+                color: var(--terminal-neutral);
+                font-size: 0.8rem;
+                text-align: right;
+                font-family: var(--terminal-font);
+            }
+            
+            .theme-terminal #direct-update {
+                width: 100%;
+                padding: 12px !important;
+                margin-top: 20px;
+                background: var(--terminal-bg);
+                color: var(--terminal-accent);
+                border: 1px solid var(--terminal-accent);
+                font-family: var(--terminal-font);
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                transition: all 0.2s;
+            }
+            
+            .theme-terminal #direct-update:hover {
+                background: var(--terminal-accent);
+                color: var(--terminal-bg);
+            }
+            
+            /* Add terminal-style blinking cursor */
+            .theme-terminal .price-display:after {
+                content: '|';
+                display: inline-block;
+                color: var(--terminal-accent);
+                animation: blink 1s step-end infinite;
+                font-size: 1.5rem;
+                margin-top: 10px;
+            }
+            
+            @keyframes blink {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0; }
+            }
+            
+            /* Positive/negative values */
+            .theme-terminal .positive {
+                color: var(--terminal-positive) !important;
+                background: rgba(16, 185, 129, 0.1);
+            }
+            
+            .theme-terminal .negative {
+                color: var(--terminal-negative) !important;
+                background: rgba(239, 68, 68, 0.1);
+            }
+            
+            /* Add time markers like a real terminal */
+            .theme-terminal .price-card:after {
+                content: attr(data-time);
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+                font-size: 0.8rem;
+                color: var(--terminal-neutral);
+                font-family: var(--terminal-font);
+            }
+            
+            /* Responsive adjustments */
+            @media (max-width: 1024px) {
+                .theme-terminal .price-card {
+                    grid-template-columns: 1fr 1fr;
+                    grid-template-rows: auto auto auto;
+                    grid-template-areas:
+                        "header header"
+                        "price details"
+                        "chart chart";
+                }
+                
+                .theme-terminal .price-card:before {
+                    min-height: 300px;
+                }
+            }
+            
+            @media (max-width: 768px) {
+                .theme-terminal .price-card {
+                    grid-template-columns: 1fr;
+                    grid-template-rows: auto auto auto auto;
+                    grid-template-areas:
+                        "header"
+                        "price"
+                        "details"
+                        "chart";
+                }
+                
+                .theme-terminal .price-display {
+                    border-right: none;
+                    border-bottom: 1px solid var(--terminal-grid);
+                }
+                
+                .theme-terminal .price-card:before {
+                    min-height: 200px;
+                }
+            }
+            
+            /* Other sections in terminal theme */
+            .theme-terminal .quote-section {
+                background: #0f172a;
+                color: var(--terminal-text);
+                padding: 40px 0;
+                font-family: var(--terminal-font);
+            }
+            
+            .theme-terminal .quote-section h2 {
+                color: var(--terminal-accent);
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            
+            .theme-terminal .quote-card {
+                background: var(--terminal-bg);
+                border-left: 2px solid var(--terminal-accent);
+                color: var(--terminal-text);
+                font-family: var(--terminal-font);
+            }
+            
+            .theme-terminal .resources-section {
+                background: #0f172a;
+                color: var(--terminal-text);
+                padding: 40px 0;
+            }
+            
+            .theme-terminal .resources-section h2 {
+                color: var(--terminal-accent);
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                font-family: var(--terminal-font);
+            }
+            
+            .theme-terminal .resource-card {
+                background: var(--terminal-bg);
+                color: var(--terminal-text);
+                border-top: 2px solid var(--terminal-accent);
+                font-family: var(--terminal-font);
+            }
+            
+            .theme-terminal .footer {
+                background: var(--terminal-bg);
+                color: var(--terminal-neutral);
+                font-family: var(--terminal-font);
+                border-top: 1px solid var(--terminal-grid);
             }
         `
     };
@@ -825,7 +1144,8 @@ function addThemeSkinSwitcher() {
     
     const themes = [
         { name: 'classic', label: 'Classic', color: '#f0f0f0' },
-        { name: 'modern', label: 'Modern', color: '#333333' }
+        { name: 'modern', label: 'Modern', color: '#333333' },
+        { name: 'terminal', label: 'Terminal', color: '#0a0e17' }
     ];
     
     themes.forEach(theme => {
